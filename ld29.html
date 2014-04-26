@@ -72,20 +72,11 @@
 				}
 
 
-				/*
-				for (var i = 0; i < levelSheet._frames.length; i++) {
-					var spr = new c.Sprite(levelSheet, i);
-					var x = i % width;
-					var y = i / width;
-					if ( spr.hitTest(x,y) ) {
-						map.push( newTile(x,y) );
-					} else {
-						map.push( {} );
-					}
-				}*/
-
 				/**
 					* load level data
+					* To get the pixel data we need to first
+					*	draw the image into a canvas and grab the
+					*	imageData (pixels) from the canvas.
 					*/
 				var imgCanvas = document.createElement('canvas');
 				imgCanvas.width = 80;
@@ -107,20 +98,17 @@
 				// loop through the pixels 4BYTE_RGBA
 				var count = 0;
 				for (var i = 0; i < pixels.length; i += 4) {
-					count++;
 					// care only about alpha atm
-					var a = pixels[i];
+					var a = pixels[i+3];
 					if (a === 0) {
 						map.push( {} );
 					} else {
-
-						var p = (i / 4);
 						var x = count % imgCanvas.width;
 						var y = Math.floor(count / imgCanvas.width);
 						map.push( newTile(x * 4, y * 4) );
-						if (i % 80 === 0)
-							console.log("y: " + y * 4);
 					}
+
+					count++;
 				}
 
 				console.log("count: " + count);
@@ -170,10 +158,6 @@
 			stage.regX = .5;
 			stage.regY = .5;
 
-			var border = newBox(1, 1, width - 1, height - 1);
-
-			stage.addChild(border);
-
 			/**
 				* Initialize Map
 				*/
@@ -181,10 +165,13 @@
 				var t = map[i];
 				if (!t.exists)
 					continue; // skip empty tiles
-				var x = i % width;
-				var y = i / width;
 				stage.addChild(t);
+				//t.cache(t.x, t.y, t.w, t.h);
 			}
+
+			// add a border
+			var border = newBox(1, 1, width - 1, height - 1);
+			stage.addChild(border);
 
 			stage.scaleX *= scale;
 			stage.scaleY *= scale;
