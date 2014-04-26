@@ -47,6 +47,7 @@
 		var init = function() {
 
 			var manifest = [
+				{src:"assets/level.png", id:"level"},
 				{src:"assets/sheet.png", id:"sheet"},
 				{src:"assets/tiles.png", id:"tiles"}
 			];
@@ -66,7 +67,7 @@
 				var tileSheet = new c.SpriteSheet(data);
 				for (var i = 0; i < tileSheet._frames.length; i++) {
 					var spr = new c.Sprite(tileSheet, i);
-					console.log(spr);
+					//console.log(spr);
 					sprTiles.push(spr);
 				}
 
@@ -83,8 +84,6 @@
 					}
 				}*/
 
-
-
 				/**
 					* load level data
 					*/
@@ -92,28 +91,44 @@
 				imgCanvas.width = 80;
 				imgCanvas.height = 45;
 				var ctx = imgCanvas.getContext('2d');
-				var img = new Image( imgCanvas.width, imgCanvas.height );
-				img.crossOrigin = '';
-				img.src = "assets/level.png";
+				var img = loader.getResult("level");
+
+				img.width = imgCanvas.width;
+				img.height = imgCanvas.height;
 
 				console.log(img);
-				img.onload = function() {
-					ctx.drawImage(img, 0, 0, img.width, img.height);
 
-					document.body.appendChild(imgCanvas);
+				ctx.drawImage(loader.getResult("level"), 0, 0, img.width, img.height);
+				document.body.appendChild(imgCanvas); // delete this
+				// grab image data from the imgCanvas
+				var imgData = ctx.getImageData(0, 0, imgCanvas.width, imgCanvas.height);
+				var pixels = imgData.data;
 
-					// grab image data from the imgCanvas
-					var imgData = ctx.getImageData(0, 0, imgCanvas.width, imgCanvas.height);
-					var pixels = imgData.data;
-					console.log(pixels);
+				// loop through the pixels 4BYTE_RGBA
+				var count = 0;
+				for (var i = 0; i < pixels.length; i += 4) {
+					count++;
+					// care only about alpha atm
+					var a = pixels[i];
+					if (a === 0) {
+						map.push( {} );
+					} else {
 
-					/**
-						* And finally initialize the game
-						*/
-					//main();
+						var p = (i / 4);
+						var x = count % imgCanvas.width;
+						var y = Math.floor(count / imgCanvas.width);
+						map.push( newTile(x * 4, y * 4) );
+						if (i % 80 === 0)
+							console.log("y: " + y * 4);
+					}
 				}
 
-				
+				console.log("count: " + count);
+
+				/**
+					* And finally initialize the game
+					*/
+				main();
 			});
 		}
 
@@ -124,6 +139,8 @@
 		var width = size;
 		var height = width * 9 / 16;
 		var scale = 2;
+
+		var tickCount = 0;
 
 		var stage;
 		var fps = 30;
@@ -157,11 +174,15 @@
 
 			stage.addChild(border);
 
-			c.Ticker.addEventListener('tick', tick);
-			c.Ticker.setFPS(fps);
-
-			for (var i = 0; i < 30; i++) {
-				var t = newTile(10 + i * 4, 20);
+			/**
+				* Initialize Map
+				*/
+			for (var i = 0; i < map.length; i++) {
+				var t = map[i];
+				if (!t.exists)
+					continue; // skip empty tiles
+				var x = i % width;
+				var y = i / width;
 				stage.addChild(t);
 			}
 
@@ -169,6 +190,12 @@
 			stage.scaleY *= scale;
 
 			stage.update();
+
+			/**
+				* configure Ticker
+				*/
+			c.Ticker.addEventListener('tick', tick);
+			c.Ticker.setFPS(fps);
 		}
 
 		/**
@@ -176,6 +203,7 @@
 			*/
 		var newTile = function(x,y) {
 			var spr = sprTiles[0].clone();
+			spr.exists = true;
 			spr.snapToPixel = true;
 			spr.x = x;
 			spr.y = y;
@@ -201,6 +229,7 @@
 			*/
 		var tick = function() {
 			stats.begin();
+			tickCount++;
 
 			stage.update();
 
