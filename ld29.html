@@ -9,9 +9,10 @@
 	</style>
 
 	<script type="text/javascript" src="http://code.createjs.com/createjs-2013.12.12.min.js"></script>
+	<script type="text/javascript" src="stats.js"></script>
 
 </head>
-<body>
+<body onload="init()">
 	<h1>Ludum Dare 29</h1>
 
 
@@ -23,8 +24,188 @@
 
 
 	<script type="text/javascript">
+		var c = createjs;
 
-	
+		/**
+			* STATS
+			*/
+		var stats = new Stats();
+		stats.setMode(0);
+		// Align top-left
+		stats.domElement.style.position = 'absolute';
+		stats.domElement.style.left = '260px';
+		stats.domElement.style.top = '10px';
+		document.body.appendChild( stats.domElement );
+
+		/**
+			*	Load assets
+			*/
+		var map = [];
+		var sprSheets = [];
+		var sprTiles = [];
+
+		var init = function() {
+
+			var manifest = [
+				{src:"assets/sheet.png", id:"sheet"},
+				{src:"assets/tiles.png", id:"tiles"}
+			];
+
+			var loader = new c.LoadQueue(false);
+			loader.loadManifest(manifest);
+
+			loader.addEventListener("complete", function() {
+
+				/**
+					* load tiles sprites
+					*/
+				var data = {
+					images: [loader.getResult("tiles")],
+					frames: {width: 4, height: 4}
+				}
+				var tileSheet = new c.SpriteSheet(data);
+				for (var i = 0; i < tileSheet._frames.length; i++) {
+					var spr = new c.Sprite(tileSheet, i);
+					console.log(spr);
+					sprTiles.push(spr);
+				}
+
+
+				/*
+				for (var i = 0; i < levelSheet._frames.length; i++) {
+					var spr = new c.Sprite(levelSheet, i);
+					var x = i % width;
+					var y = i / width;
+					if ( spr.hitTest(x,y) ) {
+						map.push( newTile(x,y) );
+					} else {
+						map.push( {} );
+					}
+				}*/
+
+
+
+				/**
+					* load level data
+					*/
+				var imgCanvas = document.createElement('canvas');
+				imgCanvas.width = 80;
+				imgCanvas.height = 45;
+				var ctx = imgCanvas.getContext('2d');
+				var img = new Image( imgCanvas.width, imgCanvas.height );
+				img.crossOrigin = '';
+				img.src = "assets/level.png";
+
+				console.log(img);
+				img.onload = function() {
+					ctx.drawImage(img, 0, 0, img.width, img.height);
+
+					document.body.appendChild(imgCanvas);
+
+					// grab image data from the imgCanvas
+					var imgData = ctx.getImageData(0, 0, imgCanvas.width, imgCanvas.height);
+					var pixels = imgData.data;
+					console.log(pixels);
+
+					/**
+						* And finally initialize the game
+						*/
+					//main();
+				}
+
+				
+			});
+		}
+
+		/**
+			* Game variables
+			*/
+		var size = 320;
+		var width = size;
+		var height = width * 9 / 16;
+		var scale = 2;
+
+		var stage;
+		var fps = 30;
+
+		var GLOBAL = {
+		}
+
+
+		/**
+			*	main
+			*/
+
+		var main = function() {
+			var canvas = document.getElementById('myCanvas');
+
+			canvas.width = width * scale;
+			canvas.height = height * scale;
+
+			/*
+			var ctx = canvas.getContext('2d');
+			ctx.scale(4,4);
+			*/
+
+			stage = new c.Stage(canvas);
+
+			// between pixel fix
+			stage.regX = .5;
+			stage.regY = .5;
+
+			var border = newBox(1, 1, width - 1, height - 1);
+
+			stage.addChild(border);
+
+			c.Ticker.addEventListener('tick', tick);
+			c.Ticker.setFPS(fps);
+
+			for (var i = 0; i < 30; i++) {
+				var t = newTile(10 + i * 4, 20);
+				stage.addChild(t);
+			}
+
+			stage.scaleX *= scale;
+			stage.scaleY *= scale;
+
+			stage.update();
+		}
+
+		/**
+			* Game objects creators
+			*/
+		var newTile = function(x,y) {
+			var spr = sprTiles[0].clone();
+			spr.snapToPixel = true;
+			spr.x = x;
+			spr.y = y;
+			spr.w = 4;
+			spr.h = 4;
+			return spr;
+		}
+
+
+		/**
+			*	Shape creators
+			*/
+		var newBox = function(x,y,w,h) {
+			var box = new c.Shape();
+			box.snapToPixel = true;
+			box.graphics.setStrokeStyle(1).beginStroke("white").rect(x, y, w, h);
+			return box;
+		}
+
+
+		/**
+			*	tick
+			*/
+		var tick = function() {
+			stats.begin();
+
+			stage.update();
+
+			stats.end();
+		}
 
 	</script>
 
