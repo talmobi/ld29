@@ -30,7 +30,7 @@
 			* STATS
 			*/
 		var stats = new Stats();
-		stats.setMode(0);
+		stats.setMode(1);
 		// Align top-left
 		stats.domElement.style.position = 'absolute';
 		stats.domElement.style.left = '260px';
@@ -62,7 +62,7 @@
 					*/
 				var data = {
 					images: [loader.getResult("tiles")],
-					frames: {width: 4, height: 4}
+					frames: {width: 2, height: 2}
 				}
 				var tileSheet = new c.SpriteSheet(data);
 				for (var i = 0; i < tileSheet._frames.length; i++) {
@@ -79,8 +79,8 @@
 					*	imageData (pixels) from the canvas.
 					*/
 				var imgCanvas = document.createElement('canvas');
-				imgCanvas.width = 80;
-				imgCanvas.height = 45;
+				imgCanvas.width = 80 * 2;
+				imgCanvas.height = 45 * 2;
 				var ctx = imgCanvas.getContext('2d');
 				var img = loader.getResult("level");
 
@@ -105,7 +105,7 @@
 					} else {
 						var x = count % imgCanvas.width;
 						var y = Math.floor(count / imgCanvas.width);
-						map.push( newTile(x * 4, y * 4) );
+						map.push( newTile(x * 2, y * 2) );
 					}
 
 					count++;
@@ -114,7 +114,7 @@
 				console.log("count: " + count);
 
 				/**
-					* And finally initialize the game
+					* And finally start the game
 					*/
 				main();
 			});
@@ -168,7 +168,8 @@
 					continue; // skip empty tiles
 				mapContainer.addChild(t);
 			}
-			mapContainer.cache(0, 0, width, height); // cache it
+			// cache the map (draw time reduced dramatically)
+			mapContainer.cache(0, 0, width, height);
 
 			stage.addChild(mapContainer);
 
@@ -197,8 +198,8 @@
 			spr.snapToPixel = true;
 			spr.x = x;
 			spr.y = y;
-			spr.w = 4;
-			spr.h = 4;
+			spr.w = 2;
+			spr.h = 2;
 			return spr;
 		}
 
@@ -218,8 +219,8 @@
 			*	tick
 			*/
 		var tick = function() {
-			stats.begin();
 			tickCount++;
+			stats.begin();
 
 			stage.update();
 
