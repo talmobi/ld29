@@ -161,13 +161,15 @@
 			/**
 				* Initialize Map
 				*/
+			var mapContainer = new c.Container();
 			for (var i = 0; i < map.length; i++) {
 				var t = map[i];
 				if (!t.exists)
 					continue; // skip empty tiles
-				stage.addChild(t);
+				mapContainer.addChild(t);
 				//t.cache(t.x, t.y, t.w, t.h);
 			}
+			stage.addChild(mapContainer);
 
 			// add a border
 			var border = newBox(1, 1, width - 1, height - 1);
