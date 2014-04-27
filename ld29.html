@@ -167,8 +167,9 @@
 				if (!t.exists)
 					continue; // skip empty tiles
 				mapContainer.addChild(t);
-				//t.cache(t.x, t.y, t.w, t.h);
 			}
+			mapContainer.cache(0, 0, width, height); // cache it
+
 			stage.addChild(mapContainer);
 
 			// add a border
