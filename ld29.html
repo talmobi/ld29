@@ -38,6 +38,24 @@
 		document.body.appendChild( stats.domElement );
 
 		/**
+			* Game variables
+			*/
+		var size = 384;
+		var width = size;
+		var height = width * 9 / 16;
+		var scale = 2;
+		var tileSize = 2;
+
+		var tickCount = 0;
+
+		var stage;
+		var fps = 30;
+
+		var GLOBAL = {
+		}
+
+
+		/**
 			*	Load assets
 			*/
 		var map = [];
@@ -62,7 +80,7 @@
 					*/
 				var data = {
 					images: [loader.getResult("tiles")],
-					frames: {width: 2, height: 2}
+					frames: {width: tileSize, height: tileSize}
 				}
 				var tileSheet = new c.SpriteSheet(data);
 				for (var i = 0; i < tileSheet._frames.length; i++) {
@@ -71,7 +89,6 @@
 					sprTiles.push(spr);
 				}
 
-
 				/**
 					* load level data
 					* To get the pixel data we need to first
@@ -79,8 +96,8 @@
 					*	imageData (pixels) from the canvas.
 					*/
 				var imgCanvas = document.createElement('canvas');
-				imgCanvas.width = 80 * 2;
-				imgCanvas.height = 45 * 2;
+				imgCanvas.width = Math.floor(width / 2);
+				imgCanvas.height = Math.floor(height / 2);
 				var ctx = imgCanvas.getContext('2d');
 				var img = loader.getResult("level");
 
@@ -105,7 +122,11 @@
 					} else {
 						var x = count % imgCanvas.width;
 						var y = Math.floor(count / imgCanvas.width);
-						map.push( newTile(x * 2, y * 2) );
+
+						if (pixels[i+2] === 255)  { // blue
+							map.push( newWaterTile(x * tileSize, y * tileSize) );
+						} else
+							map.push( newTile(x * tileSize, y * tileSize) );
 					}
 
 					count++;
@@ -118,22 +139,6 @@
 					*/
 				main();
 			});
-		}
-
-		/**
-			* Game variables
-			*/
-		var size = 320;
-		var width = size;
-		var height = width * 9 / 16;
-		var scale = 2;
-
-		var tickCount = 0;
-
-		var stage;
-		var fps = 30;
-
-		var GLOBAL = {
 		}
 
 
@@ -198,8 +203,18 @@
 			spr.snapToPixel = true;
 			spr.x = x;
 			spr.y = y;
-			spr.w = 2;
-			spr.h = 2;
+			spr.w = tileSize;
+			spr.h = tileSize;
+			return spr;
+		}
+		var newWaterTile = function(x,y) {
+			var spr = sprTiles[4].clone();
+			spr.exists = true;
+			spr.snapToPixel = true;
+			spr.x = x;
+			spr.y = y;
+			spr.w = tileSize;
+			spr.h = tileSize;
 			return spr;
 		}
 
