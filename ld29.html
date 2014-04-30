@@ -90,6 +90,41 @@
 				}
 
 				/**
+					*	load sprite sheet
+					*/
+				var data = {
+					images: [loader.getResult("sheet")],
+					frames: {width: 9, height: 9},
+					animations: {
+						stand: [0],
+						walk: {
+							frames: [1, 0, 2, 0]
+						},
+						build: [11, 12],
+						spawn: [3, 4],
+						gunwalk: {
+							frames: [21, 20, 22, 20]
+						},
+						gunwalkshot: {
+							frames: [31, 30, 32, 30]
+						},
+						voidwalk: [40,41],
+						squidwalk: [50,51],
+						squidshoot: [52, 53],
+						fishmissile: [60, 61],
+						treespawn: [70, 79],
+						tree: [79],
+						treetrapspawn: [80, 84],
+						treetrap: [84],
+						blueguywalk: {
+							frames: [90, 91, 92, 91]
+						},
+						blueguyshoot: [93,95]
+					}
+				}
+				var spriteSheet = new c.SpriteSheet(data);
+
+				/**
 					* load level data
 					* To get the pixel data we need to first
 					*	draw the image into a canvas and grab the
