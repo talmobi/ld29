@@ -264,8 +264,13 @@
 			/**
 				*	add test objects
 				*/
-			for (var i = 0; i < 30; i++) {
-				var entity = newEntity(50 + 10 * i, 50);
+			for (var i = 0; i < 170; i++) {
+				var entity = newEntity(20 + 2 * i, 100);
+				buffer.push(entity);
+				stage.addChild(entity);
+			}
+			for (var i = 0; i < 170; i++) {
+				var entity = newEntity(19 + 2 * i, 120);
 				buffer.push(entity);
 				stage.addChild(entity);
 			}
@@ -329,6 +334,10 @@
 			self.w = 9;
 			self.h = 9;
 
+			self.filters = [
+				new createjs.ColorFilter(Math.random(), Math.random(), Math.random(), 1, 200, 0, 0, 0)
+			];
+
 			self.yspeed = 0;
 			self.xspeed = 0;
 
@@ -347,10 +356,11 @@
 					} else {
 
 						switch (t.type) {
-
 							case 'water':
 								if (Math.abs(this.yspeed) > 1)
-									this.yspeed *= 0.80;
+									this.yspeed *= 0.85;
+								if (Math.abs(this.yspeed) > 0.2)
+									this.yspeed *= 0.95;
 								if (Math.abs(this.yspeed < .15))
 									this.yspeed = Math.sign(this.yspeed) * 0.15;
 								break;
@@ -361,7 +371,7 @@
 								this.yspeed = 0;
 								this.y = t.y - this.h;
 								this.gotoAndStop("stand");
-								console.log("collision");
+								//console.log("collision");
 
 
 								/*if (!once) {
@@ -426,8 +436,14 @@
 			}
 
 			// swap
+			var t = entities;
 			entities = buffer;
-			buffer = [];
+			buffer = t;
+			//buffer.length = 0; // supposedly third fastest
+			while (buffer.length > 0) // supposedly second fastest
+				buffer.pop();
+			//buffer = []; // suppposedly to be fastest
+			// src: http://stackoverflow.com/questions/1232040/how-to-empty-an-array-in-javascript
 
 			stage.update();
 
