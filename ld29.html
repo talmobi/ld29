@@ -264,12 +264,12 @@
 			/**
 				*	add test objects
 				*/
-			for (var i = 0; i < 170; i++) {
+			for (var i = 0; i < 180; i++) {
 				var entity = newEntity(20 + 2 * i, 100);
 				buffer.push(entity);
 				stage.addChild(entity);
 			}
-			for (var i = 0; i < 170; i++) {
+			for (var i = 0; i < 180; i++) {
 				var entity = newEntity(19 + 2 * i, 120);
 				buffer.push(entity);
 				stage.addChild(entity);
@@ -328,6 +328,7 @@
 			*/
 		var newEntity = function(x, y) {
 			var self = sprSheet.greenguy.clone();
+			self.snapToPixel = true;
 			self.removed = false;
 			self.x = x;
 			self.y = y;
@@ -388,6 +389,7 @@
 								setTimeout(function() {
 									j();
 								}, Math.random() * 5 * 250);
+								//j();
 								
 								break;
 						}
