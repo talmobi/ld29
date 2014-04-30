@@ -335,16 +335,27 @@
 			self.w = 9;
 			self.h = 9;
 
-			self.filters = [
+			/*self.filters = [
 				new createjs.ColorFilter(Math.random(), Math.random(), Math.random(), 1, 200, 0, 0, 0)
-			];
+			];*/
 
 			self.yspeed = 0;
 			self.xspeed = 0;
 
 			self.onFloor = false;
 
+			self.lastyspeed = 0;
+
 			self.tick = function() {
+				if (this.lastyspeed < 0 && this.yspeed >= 0 && !this.onFloor) {
+					this.scaleX *= -1;
+					if (this.scaleX < 0)
+						this.regX = 9;
+					else
+						this.regX = 0;
+				}
+				this.lastyspeed = this.yspeed;
+
 				if (!this.onFloor) {
 					var i = Math.floor( (this.x + 4) / tileSize );
 					var j = Math.floor( (this.y + this.h + this.yspeed)  / tileSize );
@@ -390,7 +401,7 @@
 									j();
 								}, Math.random() * 5 * 250);
 								//j();
-								
+
 								break;
 						}
 					}
