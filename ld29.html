@@ -304,9 +304,11 @@
 			*/
 		var newTile = function(x, y, type) {
 			var n = 0;
-			if (type === 'water')
+			if (type === 'water') {
 				n = 4;
+			}
 			var spr = sprTiles[n].clone();
+			spr.type = type || 'ground';
 			spr.exists = true;
 			spr.snapToPixel = true;
 			spr.x = x;
@@ -343,22 +345,42 @@
 						if (this.currentAnimation !== 'walk')
 							this.gotoAndPlay("walk");
 					} else {
-						if (map[i][j - 1])
-							t = map[i][j - 1];
-						this.onFloor = true;
-						this.yspeed = 0;
-						this.y = t.y - this.h;
-						this.gotoAndStop("stand");
-						console.log("collision");
+
+						switch (t.type) {
+
+							case 'water':
+								if (Math.abs(this.yspeed) > 1)
+									this.yspeed *= 0.80;
+								if (Math.abs(this.yspeed < .15))
+									this.yspeed = Math.sign(this.yspeed) * 0.15;
+								break;
+							case 'ground':
+								if (map[i][j - 1] &&  map[i][j - 1].type === 'ground')
+									t = map[i][j - 1];
+								this.onFloor = true;
+								this.yspeed = 0;
+								this.y = t.y - this.h;
+								this.gotoAndStop("stand");
+								console.log("collision");
 
 
-						/*if (!once) {
-							once = true;
-							console.log("Entity: x - " + this.x + ", y - " + this.y);
-							console.log("Tile: x - " + t.x + ", y - " + t.y);
-							console.log("Check: i - " + i + ", j - " + j);
-						}*/
-						this.jump(Math.random() * 5);
+								/*if (!once) {
+									once = true;
+									console.log("Entity: x - " + this.x + ", y - " + this.y);
+									console.log("Tile: x - " + t.x + ", y - " + t.y);
+									console.log("Check: i - " + i + ", j - " + j);
+								}*/
+								var that = this;
+								var j = function() {
+									that.jump(Math.random() * 5);
+								};
+
+								setTimeout(function() {
+									j();
+								}, Math.random() * 5 * 250);
+								
+								break;
+						}
 					}
 
 					this.y += this.yspeed;
