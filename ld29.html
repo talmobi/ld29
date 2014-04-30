@@ -258,7 +258,7 @@
 			}
 			// cache the map (draw time reduced dramatically)
 			mapContainer.cache(0, 0, width, height);
-
+			
 			stage.addChild(mapContainer);
 
 			/**
@@ -275,7 +275,7 @@
 				stage.addChild(entity);
 			}
 
-			stage.addEventListener('stagemousedown', function() {
+			/*stage.addEventListener('stagemousedown', function() {
 				for (var i = 0; i < entities.length; i++) {
 					var e = entities[i];
 					if (!e.onFloor)
@@ -283,7 +283,7 @@
 					e.onFloor = false;
 					e.yspeed = - (Math.random() * 4 + 1);
 				}
-			});
+			});*/
 
 
 			/**
