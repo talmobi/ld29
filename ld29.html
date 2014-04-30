@@ -45,11 +45,17 @@
 		var height = width * 9 / 16;
 		var scale = 2;
 		var tileSize = 2;
+		var gravity = .1;
 
 		var tickCount = 0;
 
+		var entities = [];
+		var buffer = [];
+
 		var stage;
 		var fps = 30;
+
+		var once = false;
 
 		var GLOBAL = {
 		}
@@ -58,8 +64,19 @@
 		/**
 			*	Load assets
 			*/
-		var map = [];
-		var sprSheets = [];
+		// init an empty map array
+		var map = (function() {
+			var w = width / tileSize;
+			var h = height / tileSize;
+				var arr = new Array(w);
+			for (var i = 0; i < w; i++) {
+				arr[i] = new Array(h);
+			}
+			//console.log(arr);
+			return arr;
+		})();
+
+		var sprSheet = {};
 		var sprTiles = [];
 
 		var init = function() {
@@ -96,9 +113,10 @@
 					images: [loader.getResult("sheet")],
 					frames: {width: 9, height: 9},
 					animations: {
-						stand: [0],
+						stand: 0,
 						walk: {
-							frames: [1, 0, 2, 0]
+							frames: [1, 0, 2, 0],
+							speed: 1/4
 						},
 						build: [11, 12],
 						spawn: [3, 4],
@@ -113,9 +131,9 @@
 						squidshoot: [52, 53],
 						fishmissile: [60, 61],
 						treespawn: [70, 79],
-						tree: [79],
+						tree: 79,
 						treetrapspawn: [80, 84],
-						treetrap: [84],
+						treetrap: 84,
 						blueguywalk: {
 							frames: [90, 91, 92, 91]
 						},
@@ -123,6 +141,31 @@
 					}
 				}
 				var spriteSheet = new c.SpriteSheet(data);
+
+				sprSheet = {
+					greenguy: new c.Sprite(spriteSheet, "walk")
+				}
+
+				/*
+				sprSheet = {
+					stand: new c.Sprite(spriteSheet, "stand"),
+					walk: new c.Sprite(spriteSheet, "walk"),
+					build: new c.Sprite(spriteSheet, "buildd"),
+					spawn: new c.Sprite(spriteSheet, "spawn"),
+					gunwalk: new c.Sprite(spriteSheet, "gunwalk"),
+					gunwalkshot: new c.Sprite(spriteSheet, "gunwalkshot"),
+					voidwalk: new c.Sprite(spriteSheet, "voidwalk"),
+					squidwalk: new c.Sprite(spriteSheet, "squidwalk"),
+					squidshoot: new c.Sprite(spriteSheet, "squidshoot"),
+					fishmissile: new c.Sprite(spriteSheet, "fishmissile"),
+					treespawn: new c.Sprite(spriteSheet, "treespawn"),
+					tree: new c.Sprite(spriteSheet, "tree"),
+					treetrapspawn: new c.Sprite(spriteSheet, "treetrapspawn"),
+					treetrap: new c.Sprite(spriteSheet, "treetrap"),
+					blueguywalk: new c.Sprite(spriteSheet, "blueguywalk"),
+					blueguyshoot: new c.Sprite(spriteSheet, "blueguyshoot"),
+				}
+				*/
 
 				/**
 					* load level data
@@ -153,15 +196,17 @@
 					// care only about alpha atm
 					var a = pixels[i+3];
 					if (a === 0) {
-						map.push( {} );
+						// skip it
 					} else {
-						var x = count % imgCanvas.width;
+						var x = Math.floor(count % imgCanvas.width);
 						var y = Math.floor(count / imgCanvas.width);
 
-						if (pixels[i+2] === 255)  { // blue
-							map.push( newWaterTile(x * tileSize, y * tileSize) );
-						} else
-							map.push( newTile(x * tileSize, y * tileSize) );
+						var tile;
+						if (pixels[i+2] === 255) // blue
+							tile = newTile(x * tileSize, y * tileSize, 'water');
+							else
+							tile = newTile(x * tileSize, y * tileSize);
+						map[x][y] = tile;
 					}
 
 					count++;
@@ -201,19 +246,44 @@
 			/**
 				* Initialize Map
 				*/
+				console.log("w: " + map.length + ", h: " + map[0].length);
 			var mapContainer = new c.Container();
 			for (var i = 0; i < map.length; i++) {
-				var t = map[i];
-				if (!t.exists)
-					continue; // skip empty tiles
-				mapContainer.addChild(t);
+				for (var j = 0; j < map[0].length; j++) {
+					var t = map[i][j];
+					if (!t)
+						continue; // skip empty tiles
+					mapContainer.addChild(t);
+				}
 			}
 			// cache the map (draw time reduced dramatically)
 			mapContainer.cache(0, 0, width, height);
 
 			stage.addChild(mapContainer);
 
-			// add a border
+			/**
+				*	add test objects
+				*/
+			for (var i = 0; i < 20; i++) {
+				var entity = newEntity(50 + 10 * i, 50);
+				buffer.push(entity);
+				stage.addChild(entity);
+			}
+
+			stage.addEventListener('stagemousedown', function() {
+				for (var i = 0; i < entities.length; i++) {
+					var e = entities[i];
+					if (!e.onFloor)
+						continue;
+					e.onFloor = false;
+					e.yspeed = - (Math.random() * 4 + 1);
+				}
+			});
+
+
+			/**
+				* add a border and update stage
+				*/
 			var border = newBox(1, 1, width - 1, height - 1);
 			stage.addChild(border);
 
@@ -232,8 +302,11 @@
 		/**
 			* Game objects creators
 			*/
-		var newTile = function(x,y) {
-			var spr = sprTiles[0].clone();
+		var newTile = function(x, y, type) {
+			var n = 0;
+			if (type === 'water')
+				n = 4;
+			var spr = sprTiles[n].clone();
 			spr.exists = true;
 			spr.snapToPixel = true;
 			spr.x = x;
@@ -242,15 +315,53 @@
 			spr.h = tileSize;
 			return spr;
 		}
-		var newWaterTile = function(x,y) {
-			var spr = sprTiles[4].clone();
-			spr.exists = true;
-			spr.snapToPixel = true;
-			spr.x = x;
-			spr.y = y;
-			spr.w = tileSize;
-			spr.h = tileSize;
-			return spr;
+
+		/**
+			* Entity
+			*/
+		var newEntity = function(x, y) {
+			var self = sprSheet.greenguy.clone();
+			self.removed = false;
+			self.x = x;
+			self.y = y;
+			self.w = 9;
+			self.h = 9;
+
+			self.yspeed = 0;
+			self.xspeed = 0;
+
+			self.onFloor = false;
+
+			self.tick = function() {
+				if (!this.onFloor) {
+					var i = Math.floor( this.x / tileSize );
+					var j = Math.floor( (this.y + this.h + 0)  / tileSize );
+					var t = map[i][j];
+					//if (!t) return;
+					if (!t || this.yspeed < 0) {
+						this.yspeed += gravity;
+						if (this.currentAnimation !== 'walk')
+							this.gotoAndPlay("walk");
+					} else {
+						this.onFloor = true;
+						this.yspeed = 0;
+						this.y = t.y - this.h;
+						this.gotoAndStop("stand");
+						console.log("collision");
+						if (!once) {
+							once = true;
+							console.log("Entity: x - " + this.x + ", y - " + this.y);
+							console.log("Tile: x - " + t.x + ", y - " + t.y);
+							console.log("Check: i - " + i + ", j - " + j);
+						}
+					}
+
+					this.y += this.yspeed;
+					this.x += this.xspeed;		
+				}
+			}
+
+			return self;
 		}
 
 
@@ -271,6 +382,18 @@
 		var tick = function() {
 			tickCount++;
 			stats.begin();
+
+			for (var i = 0; i < entities.length; i++) {
+				var e = entities[i];
+				if (!e.removed) {
+					e.tick();
+					buffer.push(e);
+				}
+			}
+
+			// swap
+			entities = buffer;
+			buffer = [];
 
 			stage.update();
 
