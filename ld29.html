@@ -264,7 +264,7 @@
 			/**
 				*	add test objects
 				*/
-			for (var i = 0; i < 20; i++) {
+			for (var i = 0; i < 30; i++) {
 				var entity = newEntity(50 + 10 * i, 50);
 				buffer.push(entity);
 				stage.addChild(entity);
@@ -334,8 +334,8 @@
 
 			self.tick = function() {
 				if (!this.onFloor) {
-					var i = Math.floor( this.x / tileSize );
-					var j = Math.floor( (this.y + this.h + 0)  / tileSize );
+					var i = Math.floor( (this.x + 4) / tileSize );
+					var j = Math.floor( (this.y + this.h + this.yspeed)  / tileSize );
 					var t = map[i][j];
 					//if (!t) return;
 					if (!t || this.yspeed < 0) {
@@ -343,21 +343,33 @@
 						if (this.currentAnimation !== 'walk')
 							this.gotoAndPlay("walk");
 					} else {
+						if (map[i][j - 1])
+							t = map[i][j - 1];
 						this.onFloor = true;
 						this.yspeed = 0;
 						this.y = t.y - this.h;
 						this.gotoAndStop("stand");
 						console.log("collision");
-						if (!once) {
+
+
+						/*if (!once) {
 							once = true;
 							console.log("Entity: x - " + this.x + ", y - " + this.y);
 							console.log("Tile: x - " + t.x + ", y - " + t.y);
 							console.log("Check: i - " + i + ", j - " + j);
-						}
+						}*/
+						this.jump(Math.random() * 5);
 					}
 
 					this.y += this.yspeed;
 					this.x += this.xspeed;		
+				}
+
+				self.jump = function(amount) {
+					if (this.onFloor) {
+						this.onFloor = false;
+						this.yspeed = -amount;
+					}
 				}
 			}
 
