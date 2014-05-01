@@ -76,6 +76,7 @@
 			//console.log(arr);
 			return arr;
 		})();
+		var buffertiles = [];
 
 		var sprSheet = {};
 		var sprTiles = [];
@@ -103,6 +104,7 @@
 				var tileSheet = new c.SpriteSheet(data);
 				for (var i = 0; i < tileSheet._frames.length; i++) {
 					var spr = new c.Sprite(tileSheet, i);
+					spr.stop();
 					//console.log(spr);
 					sprTiles.push(spr);
 				}
@@ -265,6 +267,7 @@
 			}
 			// cache the map (draw time reduced dramatically)
 			mapContainer.cache(0, 0, width, height);
+			mapContainer.snapToPixel = true;
 
 			stage.addChild(mapContainer);
 
@@ -298,6 +301,8 @@
 						var t = newTile(x,y);
 						map[i][j] = t;
 						stage.addChild(t);
+						buffertiles.push(t);
+						mapContainer.addChild(t.clone());
 					}
 				}
 			});
@@ -308,6 +313,15 @@
 
 			stage.addEventListener('stagemouseup', function(evt) {
 				mousePressed = false;
+
+				
+				// update the mapContainer cache and remove tiles from the stage
+				while (buffertiles.length > 0) {
+					var t = buffertiles.pop();
+					stage.removeChild(t);
+				}
+				mapContainer.updateCache();
+
 			});
 
 
@@ -467,6 +481,8 @@
 				if (!e.removed) {
 					e.tick();
 					buffer.push(e);
+				} else {
+					stage.removeChild(e);
 				}
 			}
 
