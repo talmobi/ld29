@@ -321,7 +321,6 @@
 					stage.removeChild(t);
 				}
 				mapContainer.updateCache();
-
 			});
 
 
@@ -337,6 +336,7 @@
 				* configure Ticker
 				*/
 			c.Ticker.addEventListener('tick', tick);
+			//c.Ticker.timingMode = c.Ticker.RAF;
 			c.Ticker.setFPS(fps);
 		}
 
