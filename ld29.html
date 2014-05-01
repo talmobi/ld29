@@ -56,6 +56,7 @@
 		var fps = 30;
 
 		var once = false;
+		var mousePressed = false;
 
 		var GLOBAL = {
 		}
@@ -243,6 +244,12 @@
 			stage.regX = .5;
 			stage.regY = .5;
 
+			// scale the stage
+			stage.scaleX *= scale;
+			stage.scaleY *= scale;
+
+			stage.update();
+
 			/**
 				* Initialize Map
 				*/
@@ -258,7 +265,7 @@
 			}
 			// cache the map (draw time reduced dramatically)
 			mapContainer.cache(0, 0, width, height);
-			
+
 			stage.addChild(mapContainer);
 
 			/**
@@ -275,15 +282,33 @@
 				stage.addChild(entity);
 			}
 
-			/*stage.addEventListener('stagemousedown', function() {
-				for (var i = 0; i < entities.length; i++) {
-					var e = entities[i];
-					if (!e.onFloor)
-						continue;
-					e.onFloor = false;
-					e.yspeed = - (Math.random() * 4 + 1);
+
+			// add tiles when mouse is pressed
+			stage.addEventListener('stagemousemove', function(evt) {
+				if (mousePressed) {
+					var x = Math.floor(evt.stageX / scale);
+					var y = Math.floor(evt.stageY / scale);
+					if (x < 0 || x >= width || y < 0 || y >= height)
+						return;
+					var i = Math.floor(x / tileSize);
+					var j = Math.floor(y / tileSize);
+					//alert("x: " + x + ", y: " + y);
+					if (!map[i][j]) {
+						console.log("SDKF");
+						var t = newTile(x,y);
+						map[i][j] = t;
+						stage.addChild(t);
+					}
 				}
-			});*/
+			});
+
+			stage.addEventListener('stagemousedown', function(evt) {
+				mousePressed = true;
+			});
+
+			stage.addEventListener('stagemouseup', function(evt) {
+				mousePressed = false;
+			});
 
 
 			/**
@@ -291,9 +316,6 @@
 				*/
 			var border = newBox(1, 1, width - 1, height - 1);
 			stage.addChild(border);
-
-			stage.scaleX *= scale;
-			stage.scaleY *= scale;
 
 			stage.update();
 
