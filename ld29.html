@@ -255,21 +255,55 @@
 			/**
 				* Initialize Map
 				*/
-				console.log("w: " + map.length + ", h: " + map[0].length);
-			var mapContainer = new c.Container();
+			console.log("w: " + map.length + ", h: " + map[0].length);
+			//var mapContainer = new c.Container();
+
+			// make a sliced map container
+			// slice it into 6 by 6 pieces (96 x 54 pieces of 16 in total)
+			var mapContainers = (function() {
+				var w = 4;
+				var h = 4;
+					var arr = new Array(w);
+				for (var i = 0; i < w; i++) {
+					arr[i] = new Array(h);
+				}
+				//console.log(arr);
+				return arr;
+			})();
+
+			for (var i = 0; i < 4; i++) {
+				for (var j = 0; j < 4; j++) {
+					mapContainers[i][j] = new c.Container();
+				}
+			}
+
+			// populate the mapContainers with tiles from the map
 			for (var i = 0; i < map.length; i++) {
 				for (var j = 0; j < map[0].length; j++) {
 					var t = map[i][j];
 					if (!t)
 						continue; // skip empty tiles
-					mapContainer.addChild(t);
+					//alert("i: " + i + ", j: " + j);
+					var x = Math.floor(i / (width / 4 / tileSize) );
+					var y = Math.floor(j / (height / 4 / tileSize) );
+					//alert("x: " + x + ", y: " + y);
+					mapContainers[x][y].addChild(t);
+					//mapContainer.addChild(t);
 				}
 			}
-			// cache the map (draw time reduced dramatically)
+
+			for (var i = 0; i < 4; i++) {
+				for (var j = 0; j < 4; j++) {
+					mapContainers[i][j].cache(i * 96, j * 54, 96, 54);
+					stage.addChild(mapContainers[i][j]);
+				}
+			}
+
+			/* cache the map (draw time reduced dramatically)
 			mapContainer.cache(0, 0, width, height);
 			mapContainer.snapToPixel = true;
 
-			stage.addChild(mapContainer);
+			stage.addChild(mapContainer);*/
 
 			/**
 				*	add test objects
@@ -297,12 +331,11 @@
 					var j = Math.floor(y / tileSize);
 					//alert("x: " + x + ", y: " + y);
 					if (!map[i][j]) {
-						console.log("SDKF");
 						var t = newTile(x,y);
 						map[i][j] = t;
 						stage.addChild(t);
 						buffertiles.push(t);
-						mapContainer.addChild(t.clone());
+						mapContainers[Math.floor(x / 96)][Math.floor(y / 54)].addChild(t.clone());
 					}
 				}
 			});
@@ -314,13 +347,46 @@
 			stage.addEventListener('stagemouseup', function(evt) {
 				mousePressed = false;
 
-				
-				// update the mapContainer cache and remove tiles from the stage
+				// find the affected parts of the map that needs an update
+				for (var i = 0; i < 4; i++) {
+					for (var j = 0; j < 4; j++) {
+						mapContainers[i][j].shouldUpdate = false;
+					}
+				}
+
+				// remove the tiles from the root stage
 				while (buffertiles.length > 0) {
 					var t = buffertiles.pop();
+					var x = Math.floor(t.x / (96) );
+					var y = Math.floor(t.y / (54) );
+					console.log("x: " + x + ", y: " + y);
+					mapContainers[x][y].shouldUpdate = true;
 					stage.removeChild(t);
 				}
-				mapContainer.updateCache();
+				//mapContainers.updateCache();
+
+				// update the affected parts of the map
+				for (var i = 0; i < 4; i++) {
+					for (var j = 0; j < 4; j++) {
+						if (mapContainers[i][j].shouldUpdate) {
+							mapContainers[i][j].updateCache();
+							mapContainers[i][j].shouldUpdate = false;
+
+							// add a tempory visual queue on the updated part
+							var box = newBox(i * 96 + 1, j * 54 + 1, 96 - 1, 54 - 1, "red");
+							stage.addChild(box);
+
+							var removeBox = function(b) {
+								return function() {
+									stage.removeChild(b);
+								}
+							}
+
+							setTimeout(removeBox(box), 1000);
+						}
+					}
+				}
+
 			});
 
 
@@ -461,10 +527,10 @@
 		/**
 			*	Shape creators
 			*/
-		var newBox = function(x,y,w,h) {
+		var newBox = function(x,y,w,h,color) {
 			var box = new c.Shape();
 			box.snapToPixel = true;
-			box.graphics.setStrokeStyle(1).beginStroke("white").rect(x, y, w, h);
+			box.graphics.setStrokeStyle(1).beginStroke(color || "white").rect(x, y, w, h);
 			return box;
 		}
 
