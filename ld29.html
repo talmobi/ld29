@@ -418,8 +418,12 @@
 			spr.type = type || 'ground';
 			spr.exists = true;
 			spr.snapToPixel = true;
-			spr.x = x;
-			spr.y = y;
+
+			// make sure the position is snapped into
+			// a tileSize x tileSize grid (2 x 2)
+			spr.x = Math.floor(x / tileSize) * tileSize;
+			spr.y = Math.floor(y / tileSize) * tileSize;
+
 			spr.w = tileSize;
 			spr.h = tileSize;
 			return spr;
