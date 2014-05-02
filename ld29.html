@@ -359,7 +359,7 @@
 					var t = buffertiles.pop();
 					var x = Math.floor(t.x / (96) );
 					var y = Math.floor(t.y / (54) );
-					console.log("x: " + x + ", y: " + y);
+					//console.log("x: " + x + ", y: " + y);
 					mapContainers[x][y].shouldUpdate = true;
 					stage.removeChild(t);
 				}
@@ -503,10 +503,10 @@
 									that.jump(Math.random() * 5);
 								};
 
+								// TODO
 								setTimeout(function() {
 									j();
 								}, Math.random() * 5 * 250);
-								//j();
 
 								break;
 						}
