@@ -479,7 +479,12 @@
 									this.yspeed *= 0.85;
 								if (Math.abs(this.yspeed) > 0.2)
 									this.yspeed *= 0.95;
-								if (Math.abs(this.yspeed < .15))
+								if (Math.abs(this.yspeed < .15)) {
+									this.yspeed *= 0.15;
+									if (this.yspeed < 0) {
+										this.yspeed *= -1;
+									}
+								}
 									this.yspeed = Math.sign(this.yspeed) * 0.15;
 								break;
 							case 'ground':
