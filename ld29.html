@@ -50,7 +50,7 @@
 		var tickCount = 0;
 
 		var entities = [];
-		var buffer = [];
+		//var buffer = []; // used for swapping (not efficient)
 
 		var stage;
 		var fps = 30;
@@ -554,12 +554,21 @@
 				var e = entities[i];
 				if (!e.removed) {
 					e.tick();
-					buffer.push(e);
+					//buffer.push(e); // not efficient
 				} else {
+					// splice it out (better than array swapping)
+					e.splice(i, 1);
 					stage.removeChild(e);
 				}
 			}
 
+
+
+			/**
+				* Swapping is actually not particlarly efficient due to how
+				* JS implements Arrays - it's a lot more efficient to simply
+				* splice out the removed entities.
+				*
 			// swap
 			var t = entities;
 			entities = buffer;
@@ -569,6 +578,7 @@
 				buffer.pop();
 			//buffer = []; // suppposedly to be fastest
 			// src: http://stackoverflow.com/questions/1232040/how-to-empty-an-array-in-javascript
+				*/
 
 			stage.update();
 
