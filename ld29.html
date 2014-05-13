@@ -51,7 +51,11 @@
 
 		var entities = [];
 		var buffer = [];
-		var updateMode = 1;
+
+		// 0 - swap
+		// 1 - cupdate / basic
+		// 2 - splice
+		var updateMode = 2;
 
 		var stage;
 		var fps = 30;
@@ -565,6 +569,9 @@
 				case 1:
 					cupdate();
 					break;
+				case 2:
+					spliceupdate();
+					break;
 			}
 
 			stage.update();
@@ -595,6 +602,24 @@
 			// src: http://stackoverflow.com/questions/1232040/how-to-empty-an-array-in-javascript
 		}
 
+		function spliceupdate() {
+			for (var i = 0; i < entities.length; i++) {
+			  var e = entities[i];
+			  if (!e.removed) {
+			    e.tick();
+			  } else {
+			    stage.removeChild(e);
+			    // splice the entity out
+			    entities.splice(i--, 1);
+			  }
+			}
+
+			// add new entities
+			while (buffer.length > 0) {
+			  entities.push( buffer.pop() );
+			}
+		}
+
 		function cupdate() {
 			var removed = 0;
 			for (var i = 0; i < entities.length; i++) {
@@ -619,7 +644,7 @@
 			while (buffer.length > 0) {
 				var e = buffer.pop();
 				entities.push( e );
-				stage.addChild(e);
+				//stage.addChild(e);
 			}
 			// src: http://stackoverflow.com/questions/1232040/how-to-empty-an-array-in-javascript
 		}
