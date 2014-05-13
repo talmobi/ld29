@@ -550,25 +550,28 @@
 			tickCount++;
 			stats.begin();
 
+			var removed = 0;
 			for (var i = 0; i < entities.length; i++) {
 				var e = entities[i];
 				if (!e.removed) {
 					e.tick();
-					buffer.push(e); // not efficient
+					if (removed > 0) {
+						entities[i - removed] = e;
+					}
 				} else {
 					stage.removeChild(e);
+					removed++;
 				}
+			}
+			if (removed > 0) {
+				// trim the list
+				entities.length = entities.length - removed;
 			}
 
 
-			// swap
-			var t = entities;
-			entities = buffer;
-			buffer = t;
-			//buffer.length = 0; // supposedly third fastest
+			// clear the buffer (faster than buffer.clear())
 			while (buffer.length > 0) // supposedly second fastest
-				buffer.pop();
-			//buffer = []; // suppposedly to be fastest
+				entities.push( buffer.pop() );
 			// src: http://stackoverflow.com/questions/1232040/how-to-empty-an-array-in-javascript
 
 			stage.update();
