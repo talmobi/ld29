@@ -441,6 +441,10 @@
 			self.w = 9;
 			self.h = 9;
 
+			// Test fields
+			self.ticks = 0;
+			self.aliveTime = Math.floor(Math.random() * 100) * 5;
+
 			/*self.filters = [
 				new createjs.ColorFilter(Math.random(), Math.random(), Math.random(), 1, 200, 0, 0, 0)
 			];*/
@@ -453,6 +457,12 @@
 			self.lastyspeed = 0;
 
 			self.tick = function() {
+				this.ticks++;
+				if (this.ticks > this.aliveTime && !this.removed) {
+					this.removed = true;
+					buffer.push( newEntity( this.x, this.y) );
+				}
+
 				if (this.lastyspeed < 0 && this.yspeed >= 0 && !this.onFloor) {
 					this.scaleX *= -1;
 					if (this.scaleX < 0)
@@ -493,15 +503,7 @@
 								this.yspeed = 0;
 								this.y = t.y - this.h;
 								this.gotoAndStop("stand");
-								//console.log("collision");
 
-
-								/*if (!once) {
-									once = true;
-									console.log("Entity: x - " + this.x + ", y - " + this.y);
-									console.log("Tile: x - " + t.x + ", y - " + t.y);
-									console.log("Check: i - " + i + ", j - " + j);
-								}*/
 								var that = this;
 								var j = function() {
 									that.jump(Math.random() * 5);
@@ -570,8 +572,11 @@
 
 
 			// clear the buffer (faster than buffer.clear())
-			while (buffer.length > 0) // supposedly second fastest
-				entities.push( buffer.pop() );
+			while (buffer.length > 0) {
+				var e = buffer.pop();
+				entities.push( e );
+				stage.addChild(e);
+			}
 			// src: http://stackoverflow.com/questions/1232040/how-to-empty-an-array-in-javascript
 
 			stage.update();
