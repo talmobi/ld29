@@ -51,6 +51,7 @@
 
 		var entities = [];
 		var buffer = [];
+		var updateMode = 1;
 
 		var stage;
 		var fps = 30;
@@ -460,7 +461,11 @@
 				this.ticks++;
 				if (this.ticks > this.aliveTime && !this.removed) {
 					this.removed = true;
-					buffer.push( newEntity( this.x, this.y) );
+					// add another entity
+					var e = newEntity( this.x, this.y);
+					buffer.push( e );
+					stage.addChild( e );
+					return;
 				}
 
 				if (this.lastyspeed < 0 && this.yspeed >= 0 && !this.onFloor) {
@@ -553,6 +558,44 @@
 			tickCount++;
 			stats.begin();
 
+			switch (updateMode) {
+				case 0:
+					swap();
+					break;
+				case 1:
+					cupdate();
+					break;
+			}
+
+			stage.update();
+
+			stats.end();
+		}
+
+		function swap() {
+			for (var i = 0; i < entities.length; i++) {
+				var e = entities[i];
+				if (!e.removed) {
+					e.tick();
+					buffer.push(e);
+				} else {
+					stage.removeChild(e);
+				}
+			}
+
+			// swap
+			var t = entities;
+			entities = buffer;
+			buffer = t;
+
+			// clear the buffer (faster than buffer.clear())
+			while (buffer.length > 0) {
+				buffer.pop();
+			}
+			// src: http://stackoverflow.com/questions/1232040/how-to-empty-an-array-in-javascript
+		}
+
+		function cupdate() {
 			var removed = 0;
 			for (var i = 0; i < entities.length; i++) {
 				var e = entities[i];
@@ -579,10 +622,6 @@
 				stage.addChild(e);
 			}
 			// src: http://stackoverflow.com/questions/1232040/how-to-empty-an-array-in-javascript
-
-			stage.update();
-
-			stats.end();
 		}
 
 	</script>
