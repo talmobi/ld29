@@ -46,7 +46,7 @@
 		var tileSize = 2; // in pixels
 		var gravity = .1;
 
-		var tickCount = 0;
+		var globalTicks = 0;
 
 		var entities = [];
 		var buffer = [];
@@ -367,8 +367,8 @@
 				// remove the tiles from the root stage
 				while (buffertiles.length > 0) {
 					var t = buffertiles.pop();
-					var x = Math.floor(t.x / (96) );
-					var y = Math.floor(t.y / (54) );
+					var x = Math.floor(t.x / (contWidth) );
+					var y = Math.floor(t.y / (contHeight) );
 					//console.log("x: " + x + ", y: " + y);
 					mapContainers[x][y].shouldUpdate = true;
 					stage.removeChild(t);
@@ -442,7 +442,7 @@
 		/**
 			* Entity
 			*/
-		var newEntity = function(x, y) {
+		var newEntity = function(x, y, color) {
 			var self = sprSheet.greenguy.clone();
 			self.snapToPixel = true;
 			self.removed = false;
@@ -451,13 +451,11 @@
 			self.w = 9;
 			self.h = 9;
 
+			//self.filters = [new createjs.ColorFilter(1,0,0,1)];
+
 			// Test fields
 			self.ticks = 0;
-			self.aliveTime = Math.floor(Math.random() * 100) * 5;
-
-			/*self.filters = [
-				new createjs.ColorFilter(Math.random(), Math.random(), Math.random(), 1, 200, 0, 0, 0)
-			];*/
+			self.aliveTime = globalTicks + Math.floor(Math.random() * 100) * 5 + 90;
 
 			self.yspeed = 0;
 			self.xspeed = 0;
@@ -466,9 +464,15 @@
 
 			self.lastyspeed = 0;
 
+			/**
+				*	Entity tick
+				*/
 			self.tick = function() {
-				this.ticks++;
-				if (this.ticks > this.aliveTime && !this.removed) {
+				if (this.removed) {
+					return;
+				}
+
+				if (globalTicks > this.aliveTime) {
 					this.removed = true;
 					// add another entity
 					var e = newEntity( this.x, this.y);
@@ -477,6 +481,7 @@
 					return;
 				}
 
+				// make the sprite flip from left to right at the inflection point
 				if (this.lastyspeed < 0 && this.yspeed >= 0 && !this.onFloor) {
 					this.scaleX *= -1;
 					if (this.scaleX < 0)
@@ -486,10 +491,11 @@
 				}
 				this.lastyspeed = this.yspeed;
 
+				// apply gravity and collision detection if not on floor
 				if (!this.onFloor) {
 					var i = Math.floor( (this.x + 4) / tileSize );
 					var j = Math.floor( (this.y + this.h + this.yspeed)  / tileSize );
-					var t = map[i][j];
+					var t = map[i][j] || map[i][j+1];
 					//if (!t) return;
 					if (!t || this.yspeed < 0) {
 						this.yspeed += gravity;
@@ -564,7 +570,7 @@
 			*	tick
 			*/
 		var tick = function() {
-			tickCount++;
+			globalTicks++;
 			stats.begin();
 
 			switch (updateMode) {
