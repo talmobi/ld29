@@ -40,11 +40,10 @@
 		/**
 			* Game variables
 			*/
-		var size = 384;
-		var width = size;
+		var width = 384;
 		var height = width * 9 / 16;
 		var scale = 2;
-		var tileSize = 2;
+		var tileSize = 2; // in pixels
 		var gravity = .1;
 
 		var tickCount = 0;
@@ -52,10 +51,10 @@
 		var entities = [];
 		var buffer = [];
 
-		// 0 - swap
-		// 1 - cupdate / basic
+		// 0 - swap // slow
+		// 1 - inplace // standard
 		// 2 - splice
-		var updateMode = 2;
+		var updateMode = 1;
 
 		var stage;
 		var fps = 30;
@@ -252,8 +251,8 @@
 			stage.regY = .5;
 
 			// scale the stage
-			stage.scaleX *= scale;
-			stage.scaleY *= scale;
+			stage.scaleX = scale;
+			stage.scaleY = scale;
 
 			stage.update();
 
@@ -264,10 +263,13 @@
 			//var mapContainer = new c.Container();
 
 			// make a sliced map container
-			// slice it into 6 by 6 pieces (96 x 54 pieces of 16 in total)
+			// slice it into 4 by 4
+			var contSize = 4; // containers size 4 by 4 = 16 in total
+			var contWidth = (width / contSize); // single container width
+			var contHeight = (height / contSize); // single container width
 			var mapContainers = (function() {
-				var w = 4;
-				var h = 4;
+				var w = contSize;
+				var h = contSize;
 					var arr = new Array(w);
 				for (var i = 0; i < w; i++) {
 					arr[i] = new Array(h);
@@ -288,30 +290,33 @@
 					var t = map[i][j];
 					if (!t)
 						continue; // skip empty tiles
-					//alert("i: " + i + ", j: " + j);
-					var x = Math.floor(i / (width / 4 / tileSize) );
-					var y = Math.floor(j / (height / 4 / tileSize) );
-					//alert("x: " + x + ", y: " + y);
+					
+					// find the correct container
+					var x = Math.floor(i / (contWidth / tileSize) );
+					var y = Math.floor(j / (contHeight / tileSize) );
 					mapContainers[x][y].addChild(t);
-					//mapContainer.addChild(t);
 				}
 			}
 
-			for (var i = 0; i < 4; i++) {
-				for (var j = 0; j < 4; j++) {
-					mapContainers[i][j].cache(i * 96, j * 54, 96, 54);
+			// cache the containers
+			for (var i = 0; i < contSize; i++) {
+				for (var j = 0; j < contSize; j++) {
+					var cw = contWidth;
+					var ch = contHeight;
+					mapContainers[i][j].cache(i * cw, j * ch, cw, ch);
 					stage.addChild(mapContainers[i][j]);
 				}
 			}
 
-			/* cache the map (draw time reduced dramatically)
+			/* OLD single container cache ( slow re-caching )
+			cache the map (draw time reduced dramatically)
 			mapContainer.cache(0, 0, width, height);
 			mapContainer.snapToPixel = true;
 
 			stage.addChild(mapContainer);*/
 
 			/**
-				*	add test objects
+				*	add some entities
 				*/
 			for (var i = 0; i < 180; i++) {
 				var entity = newEntity(20 + 2 * i, 100);
@@ -567,7 +572,7 @@
 					swap();
 					break;
 				case 1:
-					cupdate();
+					inplace();
 					break;
 				case 2:
 					spliceupdate();
@@ -620,7 +625,7 @@
 			}
 		}
 
-		function cupdate() {
+		function inplace() {
 			var removed = 0;
 			for (var i = 0; i < entities.length; i++) {
 				var e = entities[i];
