@@ -1,8 +1,38 @@
 <html>
 <head>
   <title>Scale post</title>
+
+  <style type="text/css">
+    body {
+      background-color: #EEE;
+      color: #222;
+    }
+
+    canvas {
+      background-color: #222;
+    }
+  </style>
+
+  <script type="text/javascript" src="http://code.createjs.com/createjs-2013.12.12.min.js"></script>
+  <script type="text/javascript" src="stats.js"></script>
 </head>
 <body>
+
+  <script type="text/javascript">
+    function toggle(canvas_id, scale, tileScaleMethod, blurryscaling) {
+      // hide all other canvases
+      var cs = document.getElementsByTagName('canvas');
+      for (var i = 0; i < cs.length; i++) {
+        cs[i].style.display = 'none';
+      }
+
+      var c = document.getElementById(canvas_id);
+      init(canvas_id, scale, tileScaleMethod, blurryscaling);
+
+      c.style.display = '';
+    }
+  </script>
+
   <link rel="stylesheet" type="text/css" href="http://community.createjs.com/discussions/easeljs/8597-stage-blurry-scaling-fix">
 
   <!-- normal -->
@@ -22,6 +52,9 @@
       mapContainers[i][j].cache(i * cw, j * ch, cw, ch);
     </pre>
     <img src="http://i.imgur.com/KDQqDcv.png">
+
+    <button onclick="toggle('bs_canvas', 2, 1, true);">Example: Blurry</button>
+    <canvas id="bs_canvas"></canvas>
   </p>
 
   <p>
@@ -30,6 +63,9 @@
       mapContainers[i][j].cache(i * cw, j * ch, cw, ch, scale);
     </pre>
     <img src="http://i.imgur.com/dHNBXGG.png">
+
+    <button onclick="toggle('pix_canvas', 2, 1, false);">Example: Pixelated</button>
+    <canvas id="pix_canvas"></canvas>
   </p>
 
   <p>
@@ -45,6 +81,9 @@
 
     <img src="http://i.imgur.com/PMk3gNJ.png">
     <img src="http://i.imgur.com/HkyJ6VK.png">
+
+    <button onclick="toggle('bld_canvas', 2, 0, false);">Example: Sprite bleeding</button>
+    <canvas id="bld_canvas"></canvas>
   </p>
 
   <p>
@@ -59,8 +98,12 @@
     <img src="http://i.imgur.com/UsrdYBS.png">
     <img src="http://i.imgur.com/HkyJ6VK.png">
 
+    <button onclick="toggle('nobld_canvas', 2, 1, false);">Example: no bleeding</button>
+    <canvas id="nobld_canvas"></canvas>
   </p>
 
+
+  <script type="text/javascript" src='ld29.js'></script>
 
 </body>
 </html>

@@ -46,9 +46,30 @@ var GLOBAL = {
   * Load assets
   */
 // init an empty map array
-var map = (function() {
-  var w = width / tileSize;
-  var h = height / tileSize;
+function array2D(w,h) {
+  var w = Math.floor(width / tileSize);
+  var h = Math.floor(height / tileSize);
+    var arr = new Array(w);
+  for (var i = 0; i < w; i++) {
+    arr[i] = new Array(h);
+  }
+  //console.log(arr);
+  return arr;
+}
+
+var map = (array2D)();
+var buffertiles = [];
+
+// make a sliced map container
+// slice it into 4 by 4
+contSize = 4; // containers size 4 by 4 = 16 in total
+contWidth = (width / contSize); // single container width
+contHeight = (height / contSize); // single container width
+
+// init map containers
+var mapContainers = (function() {
+  var w = contSize;
+  var h = contSize;
     var arr = new Array(w);
   for (var i = 0; i < w; i++) {
     arr[i] = new Array(h);
@@ -56,15 +77,24 @@ var map = (function() {
   //console.log(arr);
   return arr;
 })();
-var buffertiles = [];
+
+for (var i = 0; i < 4; i++) {
+  for (var j = 0; j < 4; j++) {
+    mapContainers[i][j] = new c.Container();
+  }
+}
 
 var sprSheet = {};
 var sprTiles = [];
 
-var init = function(_scale, _tileScaleMethod, _bs) {
+var tileMethod;
+
+function init(_canvas, _scale, _tileScaleMethod, _bs) {
   scale = _scale || scale;
   var tileMethod = typeof _tileScaleMethod === 'number' ? _tileScaleMethod : 1;
   blurryScaling = typeof _bs === 'boolean' ? _bs : false;
+
+  tileMethod = Math.floor(tileMethod);
 
   var manifest = [
     {src:"assets/level.png", id:"level"},
@@ -75,7 +105,8 @@ var init = function(_scale, _tileScaleMethod, _bs) {
   var loader = new c.LoadQueue(false);
   loader.loadManifest(manifest);
 
-  loader.addEventListener("complete", function() {
+  loader.on("complete", function() {
+    sprTiles.length = 0; // clear the tiles (if any)
 
     /**
       * load tiles sprites
@@ -203,7 +234,7 @@ var init = function(_scale, _tileScaleMethod, _bs) {
     console.log(img);
 
     ctx.drawImage(loader.getResult("level"), 0, 0, img.width, img.height);
-    document.body.appendChild(imgCanvas); // delete this
+    //document.body.appendChild(imgCanvas); // delete this
     // grab image data from the imgCanvas
     var imgData = ctx.getImageData(0, 0, imgCanvas.width, imgCanvas.height);
     var pixels = imgData.data;
@@ -235,7 +266,7 @@ var init = function(_scale, _tileScaleMethod, _bs) {
     /**
       * And finally start the game
       */
-    main();
+    main(_canvas);
   });
 }
 
@@ -244,8 +275,8 @@ var init = function(_scale, _tileScaleMethod, _bs) {
   * main
   */
 
-var main = function() {
-  var canvas = document.getElementById('myCanvas');
+function main(canv) {
+  var canvas = document.getElementById(canv || 'myCanvas');
 
   canvas.width = width * scale;
   canvas.height = height * scale;
@@ -272,27 +303,11 @@ var main = function() {
     * Initialize Map
     */
   console.log("w: " + map.length + ", h: " + map[0].length);
-  //var mapContainer = new c.Container();
 
-  // make a sliced map container
-  // slice it into 4 by 4
-  var contSize = 4; // containers size 4 by 4 = 16 in total
-  var contWidth = (width / contSize); // single container width
-  var contHeight = (height / contSize); // single container width
-  var mapContainers = (function() {
-    var w = contSize;
-    var h = contSize;
-      var arr = new Array(w);
-    for (var i = 0; i < w; i++) {
-      arr[i] = new Array(h);
-    }
-    //console.log(arr);
-    return arr;
-  })();
-
+  // clear containers from existing tiles
   for (var i = 0; i < 4; i++) {
     for (var j = 0; j < 4; j++) {
-      mapContainers[i][j] = new c.Container();
+      mapContainers[i][j].removeAllChildren();
     }
   }
 
@@ -335,6 +350,9 @@ var main = function() {
   /**
     * add some entities
     */
+  stage.clear();
+  entities.length = 0;
+  buffertiles.length = 0;
   for (var i = 0; i < 180; i++) {
     var entity = newEntity(20 + 2 * i, 100);
     buffer.push(entity);
