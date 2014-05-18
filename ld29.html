@@ -107,17 +107,28 @@
 				}
 				var tileSheet = new c.SpriteSheet(data);
 				for (var i = 0; i < tileSheet._frames.length; i++) {
+					var sheet = tileSheet;
+
+					/*
+					spr bleeds if scaled
 					var spr = new c.Sprite(tileSheet, i);
 					spr.gotoAndStop(i);
+					sprTiles.push(spr);
+					*/
+
 					//console.log(spr);
-					var sheet = tileSheet;
+					/*
 					var frame = sheet.getFrame(i);
 					var bm = new createjs.Bitmap( frame.image );
 					bm.sourceRect = frame.rect;
+					sprTiles.push(bm);
+					*/
 
+					// scale bleed fix
 					var frame = createjs.SpriteSheetUtils.extractFrame(sheet, i);
 					var bm = new createjs.Bitmap(frame);
 					sprTiles.push(bm);
+					
 				}
 
 				/**
@@ -470,6 +481,7 @@
 
 			self.onFloor = false;
 
+			self.jumpPower = 4;
 			self.lastyspeed = 0;
 
 			/**
@@ -535,7 +547,7 @@
 
 								var that = this;
 								var j = function() {
-									that.jump(Math.random() * 5);
+									that.jump(Math.random() * that.jumpPower);
 								};
 
 								// TODO

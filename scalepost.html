@@ -1,0 +1,49 @@
+<html>
+<head>
+  <title>Scale post</title>
+</head>
+<body>
+  <link rel="stylesheet" type="text/css" href="http://community.createjs.com/discussions/easeljs/8597-stage-blurry-scaling-fix">
+
+  <!-- normal -->
+  <img src="http://i.imgur.com/PDXvOPw.png">
+
+  <!-- stretched 'fix' -->
+  <img src="http://i.imgur.com/9ehPbHg.png">
+
+  <!-- no bleeding -->
+  <img src="http://i.imgur.com/UsrdYBS.png">
+
+
+  <p>
+    <h2>Bleeding</h2>
+    <pre>
+      var spr = new c.Sprite(tileSheet, i);
+      spr.gotoAndStop(i);
+      sprTiles.push(spr);
+    </pre>
+
+    <img src="http://i.imgur.com/P4F8nAL.png">
+    <img src="http://i.imgur.com/g7ArPCS.png">
+
+    <img src="http://i.imgur.com/PMk3gNJ.png">
+    <img src="http://i.imgur.com/HkyJ6VK.png">
+  </p>
+
+  <p>
+    <h2>No bleeding</h2>
+    <pre>
+      var frame = createjs.SpriteSheetUtils.extractFrame(sheet, i);
+      var bm = new createjs.Bitmap(frame);
+      sprTiles.push(bm);
+    </pre>
+
+    <!-- no bleeding -->
+    <img src="http://i.imgur.com/UsrdYBS.png">
+    <img src="http://i.imgur.com/HkyJ6VK.png">
+    
+  </p>
+
+
+</body>
+</html>
