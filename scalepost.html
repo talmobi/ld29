@@ -6,14 +6,31 @@
   <link rel="stylesheet" type="text/css" href="http://community.createjs.com/discussions/easeljs/8597-stage-blurry-scaling-fix">
 
   <!-- normal -->
+  tileSheet
   <img src="http://i.imgur.com/PDXvOPw.png">
 
   <!-- stretched 'fix' -->
-  <img src="http://i.imgur.com/9ehPbHg.png">
+  <!-- <img src="http://i.imgur.com/9ehPbHg.png"> -->
 
   <!-- no bleeding -->
-  <img src="http://i.imgur.com/UsrdYBS.png">
+  <!-- <img src="http://i.imgur.com/UsrdYBS.png"> -->
 
+
+  <p>
+    <h2>Blurry scaling</h2>
+    <pre>
+      mapContainers[i][j].cache(i * cw, j * ch, cw, ch);
+    </pre>
+    <img src="http://i.imgur.com/KDQqDcv.png">
+  </p>
+
+  <p>
+    <h2>Pixelated scaling</h2>
+    <pre>
+      mapContainers[i][j].cache(i * cw, j * ch, cw, ch, scale);
+    </pre>
+    <img src="http://i.imgur.com/dHNBXGG.png">
+  </p>
 
   <p>
     <h2>Bleeding</h2>
@@ -41,7 +58,7 @@
     <!-- no bleeding -->
     <img src="http://i.imgur.com/UsrdYBS.png">
     <img src="http://i.imgur.com/HkyJ6VK.png">
-    
+
   </p>
 
 
