@@ -108,9 +108,16 @@
 				var tileSheet = new c.SpriteSheet(data);
 				for (var i = 0; i < tileSheet._frames.length; i++) {
 					var spr = new c.Sprite(tileSheet, i);
-					spr.stop();
+					spr.gotoAndStop(i);
 					//console.log(spr);
-					sprTiles.push(spr);
+					var sheet = tileSheet;
+					var frame = sheet.getFrame(i);
+					var bm = new createjs.Bitmap( frame.image );
+					bm.sourceRect = frame.rect;
+
+					var frame = createjs.SpriteSheetUtils.extractFrame(sheet, i);
+					var bm = new createjs.Bitmap(frame);
+					sprTiles.push(bm);
 				}
 
 				/**
@@ -245,6 +252,7 @@
 			*/
 
 			stage = new c.Stage(canvas);
+			//canvas.getContext('2d').imageSmoothingEnabled = false;
 
 			// between pixel fix
 			stage.regX = .5;
@@ -303,7 +311,7 @@
 				for (var j = 0; j < contSize; j++) {
 					var cw = contWidth;
 					var ch = contHeight;
-					mapContainers[i][j].cache(i * cw, j * ch, cw, ch);
+					mapContainers[i][j].cache(i * cw, j * ch, cw, ch, scale);
 					stage.addChild(mapContainers[i][j]);
 				}
 			}
@@ -345,7 +353,7 @@
 						map[i][j] = t;
 						stage.addChild(t);
 						buffertiles.push(t);
-						mapContainers[Math.floor(x / 96)][Math.floor(y / 54)].addChild(t.clone());
+						mapContainers[Math.floor(x / contWidth)][Math.floor(y / contHeight)].addChild(t.clone());
 					}
 				}
 			});
@@ -434,8 +442,8 @@
 			spr.x = Math.floor(x / tileSize) * tileSize;
 			spr.y = Math.floor(y / tileSize) * tileSize;
 
-			spr.w = tileSize;
-			spr.h = tileSize;
+			spr.w = tileSize * 2;
+			spr.h = tileSize * 2;
 			return spr;
 		}
 
