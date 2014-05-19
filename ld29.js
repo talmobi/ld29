@@ -1,14 +1,12 @@
-var c = createjs;
-
 /**
   * STATS
   */
 var stats = new Stats();
-stats.setMode(1);
+stats.setMode(0);
 // Align top-left
 stats.domElement.style.position = 'absolute';
 stats.domElement.style.left = '260px';
-stats.domElement.style.top = '10px';
+stats.domElement.style.top = '5px';
 document.body.appendChild( stats.domElement );
 
 /**
@@ -16,7 +14,7 @@ document.body.appendChild( stats.domElement );
   */
 var width = 384;
 var height = width * 9 / 16;
-var scale = 2;
+var scale = 1;
 var tileSize = 2; // in pixels
 var gravity = .1;
 
@@ -25,9 +23,6 @@ var globalTicks = 0;
 var entities = [];
 var buffer = [];
 
-// 0 - swap // slow
-// 1 - inplace // standard
-// 2 - splice
 var updateMode = 1;
 
 var stage;
@@ -36,15 +31,7 @@ var fps = 30;
 var once = false;
 var mousePressed = false;
 
-var blurryScaling = false;
 
-var GLOBAL = {
-}
-
-
-/**
-  * Load assets
-  */
 // init an empty map array
 function array2D(w,h) {
   var w = Math.floor(width / tileSize);
@@ -59,12 +46,13 @@ function array2D(w,h) {
 
 var map = (array2D)();
 var buffertiles = [];
+var mapContainer;
 
 // make a sliced map container
 // slice it into 4 by 4
-contSize = 4; // containers size 4 by 4 = 16 in total
-contWidth = (width / contSize); // single container width
-contHeight = (height / contSize); // single container width
+var contSize = 4; // containers size 4 by 4 = 16 in total
+var contWidth = (width / contSize); // single container width
+var contHeight = (height / contSize); // single container width
 
 // init map containers
 var mapContainers = (function() {
@@ -80,201 +68,100 @@ var mapContainers = (function() {
 
 for (var i = 0; i < 4; i++) {
   for (var j = 0; j < 4; j++) {
-    mapContainers[i][j] = new c.Container();
+    // mapContainers[i][j] = new c.Container();
   }
 }
 
 var sprSheet = {};
 var sprTiles = [];
 
-var tileMethod;
+var game;
+var divid;
+var scale = 1;
+var nn = true; // nearest neighbor scaling
 
-function init(_canvas, _scale, _tileScaleMethod, _bs) {
-  scale = _scale || scale;
-  var tileMethod = typeof _tileScaleMethod === 'number' ? _tileScaleMethod : 1;
-  blurryScaling = typeof _bs === 'boolean' ? _bs : false;
 
-  tileMethod = Math.floor(tileMethod);
+/**
+  * Preload assets
+  */
+function preload() {
+  game.load.image('level', 'assets/level.png');
+  game.load.image('sheet', 'assets/sheet.png');
+  game.load.spritesheet('tiles', 'assets/tiles.png', 2, 2);
+} // preload
 
-  var manifest = [
-    {src:"assets/level.png", id:"level"},
-    {src:"assets/sheet.png", id:"sheet"},
-    {src:"assets/tiles.png", id:"tiles"}
-  ];
-
-  var loader = new c.LoadQueue(false);
-  loader.loadManifest(manifest);
-
-  loader.on("complete", function() {
-    sprTiles.length = 0; // clear the tiles (if any)
-
-    /**
-      * load tiles sprites
-      */
-    var data = {
-      images: [loader.getResult("tiles")],
-      frames: {width: tileSize, height: tileSize}
-    }
-    var tileSheet = new c.SpriteSheet(data);
-    for (var i = 0; i < tileSheet._frames.length; i++) {
-      switch (tileMethod) {
-        case 0: // bleeding
-          var spr = new c.Sprite(tileSheet, i);
-          spr.gotoAndStop(i);
-          sprTiles.push(spr);
-          break;
-
-        case 1: // no bleeding
-          var frame = createjs.SpriteSheetUtils.extractFrame(tileSheet, i);
-          var bm = new createjs.Bitmap(frame);
-          sprTiles.push(bm);
-          break;
-      }
-
-      /*
-      spr bleeds if scaled
-      var spr = new c.Sprite(tileSheet, i);
-      spr.gotoAndStop(i);
-      sprTiles.push(spr);
-      */
-
-      //console.log(spr);
-      /*
-      var frame = sheet.getFrame(i);
-      var bm = new createjs.Bitmap( frame.image );
-      bm.sourceRect = frame.rect;
-      sprTiles.push(bm);
-      */
-
-      /*
-      // scale bleed fix
-      var frame = createjs.SpriteSheetUtils.extractFrame(sheet, i);
-      var bm = new createjs.Bitmap(frame);
-      sprTiles.push(bm);
-      */
-      
-    }
-
-    /**
-      * load sprite sheet
-      */
-    var data = {
-      images: [loader.getResult("sheet")],
-      frames: {width: 9, height: 9},
-      animations: {
-        stand: 0,
-        walk: {
-          frames: [1, 0, 2, 0],
-          speed: 1/4
-        },
-        build: [11, 12],
-        spawn: [3, 4],
-        gunwalk: {
-          frames: [21, 20, 22, 20]
-        },
-        gunwalkshot: {
-          frames: [31, 30, 32, 30]
-        },
-        voidwalk: [40,41],
-        squidwalk: [50,51],
-        squidshoot: [52, 53],
-        fishmissile: [60, 61],
-        treespawn: [70, 79],
-        tree: 79,
-        treetrapspawn: [80, 84],
-        treetrap: 84,
-        blueguywalk: {
-          frames: [90, 91, 92, 91]
-        },
-        blueguyshoot: [93,95]
-      }
-    }
-    var spriteSheet = new c.SpriteSheet(data);
-
-    sprSheet = {
-      greenguy: new c.Sprite(spriteSheet, "walk")
-    }
-
-    /*
-    sprSheet = {
-      stand: new c.Sprite(spriteSheet, "stand"),
-      walk: new c.Sprite(spriteSheet, "walk"),
-      build: new c.Sprite(spriteSheet, "buildd"),
-      spawn: new c.Sprite(spriteSheet, "spawn"),
-      gunwalk: new c.Sprite(spriteSheet, "gunwalk"),
-      gunwalkshot: new c.Sprite(spriteSheet, "gunwalkshot"),
-      voidwalk: new c.Sprite(spriteSheet, "voidwalk"),
-      squidwalk: new c.Sprite(spriteSheet, "squidwalk"),
-      squidshoot: new c.Sprite(spriteSheet, "squidshoot"),
-      fishmissile: new c.Sprite(spriteSheet, "fishmissile"),
-      treespawn: new c.Sprite(spriteSheet, "treespawn"),
-      tree: new c.Sprite(spriteSheet, "tree"),
-      treetrapspawn: new c.Sprite(spriteSheet, "treetrapspawn"),
-      treetrap: new c.Sprite(spriteSheet, "treetrap"),
-      blueguywalk: new c.Sprite(spriteSheet, "blueguywalk"),
-      blueguyshoot: new c.Sprite(spriteSheet, "blueguyshoot"),
-    }
+// Initialize assets
+function create() {
+  /**
+    * load level data
+    * To get the pixel data we need to first
+    * draw the image into a canvas and grab the
+    * imageData (pixels) from the canvas.
     */
+  var img = game.cache.getImage('level');
+  var imgCanvas = document.createElement('canvas');
+  imgCanvas.width = img.width;
+  imgCanvas.height = img.height;
+  var ctx = imgCanvas.getContext('2d');
 
-    /**
-      * load level data
-      * To get the pixel data we need to first
-      * draw the image into a canvas and grab the
-      * imageData (pixels) from the canvas.
-      */
-    var imgCanvas = document.createElement('canvas');
-    imgCanvas.width = Math.floor(width / 2);
-    imgCanvas.height = Math.floor(height / 2);
-    var ctx = imgCanvas.getContext('2d');
-    var img = loader.getResult("level");
+  console.log(img);
 
-    img.width = imgCanvas.width;
-    img.height = imgCanvas.height;
+  ctx.drawImage(img, 0, 0, img.width, img.height);
+  document.getElementById(divid).appendChild(imgCanvas); // delete this
+  // grab image data from the imgCanvas
+  var imgData = ctx.getImageData(0, 0, imgCanvas.width, imgCanvas.height);
+  var pixels = imgData.data;
 
-    console.log(img);
+  mapContainer = new Phaser.Group(game, null, 'tiles');
 
-    ctx.drawImage(loader.getResult("level"), 0, 0, img.width, img.height);
-    //document.body.appendChild(imgCanvas); // delete this
-    // grab image data from the imgCanvas
-    var imgData = ctx.getImageData(0, 0, imgCanvas.width, imgCanvas.height);
-    var pixels = imgData.data;
+  // loop through the pixels 4BYTE_RGBA
+  var count = 0;
+  for (var i = 0; i < pixels.length; i += 4) {
+    // care only about alpha atm
+    var a = pixels[i+3];
+    if (a === 0) {
+      // skip it
+    } else {
+      var x = Math.floor(count % imgCanvas.width);
+      var y = Math.floor(count / imgCanvas.width);
 
-    // loop through the pixels 4BYTE_RGBA
-    var count = 0;
-    for (var i = 0; i < pixels.length; i += 4) {
-      // care only about alpha atm
-      var a = pixels[i+3];
-      if (a === 0) {
-        // skip it
-      } else {
-        var x = Math.floor(count % imgCanvas.width);
-        var y = Math.floor(count / imgCanvas.width);
-
-        var tile;
-        if (pixels[i+2] === 255) // blue
-          tile = newTile(x * tileSize, y * tileSize, 'water');
-          else
-          tile = newTile(x * tileSize, y * tileSize);
-        map[x][y] = tile;
-      }
-
-      count++;
+      var tile;
+      if (pixels[i+2] === 255) // blue
+        tile = newTile(x * tileSize, y * tileSize, 'water');
+        else
+        tile = newTile(x * tileSize, y * tileSize);
+      map[x][y] = tile;
+      //mapContainer.add(tile);
     }
 
-    console.log("count: " + count);
+    count++;
+  }
 
-    /**
-      * And finally start the game
-      */
-    main(_canvas);
+  console.log(mapContainer);
+
+  console.log("count: " + count);
+
+  game.scale.setShowAll();
+  game.scale.refresh();
+
+} // create
+
+function init(_divid, _scale, _nn) {
+  game = new Phaser.Game(width,height,Phaser.AUTO, _divid || 'container', {
+    preload: preload,
+    create: create,
+    update: update,
+    render: render
   });
+
+  scale = (_scale || scale) | 0;
+  divid = _divid;
 }
 
 
 /**
   * main
   */
-
 function main(canv) {
   var canvas = document.getElementById(canv || 'myCanvas');
 
@@ -406,7 +293,6 @@ function main(canv) {
       var y = Math.floor(t.y / (contHeight) );
       //console.log("x: " + x + ", y: " + y);
       mapContainers[x][y].shouldUpdate = true;
-      stage.removeChild(t);
     }
     //mapContainers.updateCache();
 
@@ -419,7 +305,6 @@ function main(canv) {
 
           // add a tempory visual queue on the updated part
           var box = newBox(i * 96 + 1, j * 54 + 1, 96 - 1, 54 - 1, "red");
-          stage.addChild(box);
 
           var removeBox = function(b) {
             return function() {
@@ -434,22 +319,8 @@ function main(canv) {
 
   });
 
+} // main
 
-  /**
-    * add a border and update stage
-    */
-  var border = newBox(1, 1, width - 1, height - 1);
-  stage.addChild(border);
-
-  stage.update();
-
-  /**
-    * configure Ticker
-    */
-  c.Ticker.addEventListener('tick', tick);
-  //c.Ticker.timingMode = c.Ticker.RAF;
-  c.Ticker.setFPS(fps);
-}
 
 /**
   * Game objects creators
@@ -459,7 +330,9 @@ var newTile = function(x, y, type) {
   if (type === 'water') {
     n = 4;
   }
-  var spr = sprTiles[n].clone();
+  var spr = game.add.sprite(x | 0, y | 0, 'tiles', n);
+  spr.anchor.set(0,0);
+  spr.smoothed = false;
   spr.type = type || 'ground';
   spr.exists = true;
   spr.snapToPixel = true;
@@ -469,8 +342,8 @@ var newTile = function(x, y, type) {
   spr.x = Math.floor(x / tileSize) * tileSize;
   spr.y = Math.floor(y / tileSize) * tileSize;
 
-  spr.w = tileSize * 2;
-  spr.h = tileSize * 2;
+  spr.w = tileSize * scale;
+  spr.h = tileSize * scale;
   return spr;
 }
 
@@ -478,7 +351,9 @@ var newTile = function(x, y, type) {
   * Entity
   */
 var newEntity = function(x, y, color) {
-  var self = sprSheet.greenguy.clone();
+  //var self = sprSheet.greenguy.clone();
+  var self = {};
+
   self.snapToPixel = true;
   self.removed = false;
   self.x = x;
@@ -511,9 +386,7 @@ var newEntity = function(x, y, color) {
     if (globalTicks > this.aliveTime) {
       this.removed = true;
       // add another entity
-      var e = newEntity( this.x, this.y);
-      buffer.push( e );
-      stage.addChild( e );
+      this.createCopy();
       return;
     }
 
@@ -577,13 +450,18 @@ var newEntity = function(x, y, color) {
 
       this.y += this.yspeed;
       this.x += this.xspeed;    
-    }
+    } // tick
 
     self.jump = function(amount) {
       if (this.onFloor) {
         this.onFloor = false;
         this.yspeed = -amount;
       }
+    } // jump
+
+    self.createCopy = function() {
+      var e = newEntity( this.x, this.y);
+      buffer.push( e );
     }
   }
 
@@ -595,9 +473,9 @@ var newEntity = function(x, y, color) {
   * Shape creators
   */
 var newBox = function(x,y,w,h,color) {
-  var box = new c.Shape();
-  box.snapToPixel = true;
-  box.graphics.setStrokeStyle(1).beginStroke(color || "white").rect(x, y, w, h);
+  var box = game.add.graphics(0,0);
+  box.lineStyle(1, color || "white", 1);
+  box.drawRect(x, y, w, h);
   return box;
 }
 
@@ -605,7 +483,7 @@ var newBox = function(x,y,w,h,color) {
 /**
   * tick
   */
-var tick = function() {
+function update() {
   globalTicks++;
   stats.begin();
 
@@ -621,8 +499,9 @@ var tick = function() {
       break;
   }
 
-  stage.update();
+}
 
+function render() {
   stats.end();
 }
 
