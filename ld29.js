@@ -18,7 +18,7 @@ var width = 384;
 var height = width * 9 / 16;
 var scale = 2;
 var tileSize = 2; // in pixels
-var gravity = .1;
+var gravity = .1 / 2;
 
 var globalTicks = 0;
 
@@ -31,7 +31,7 @@ var buffer = [];
 var updateMode = 1;
 
 var stage;
-var fps = 30;
+var fps = 60;
 
 var once = false;
 var mousePressed = false;
@@ -497,7 +497,7 @@ var newEntity = function(x, y, color) {
 
   self.onFloor = false;
 
-  self.jumpPower = 4;
+  self.jumpPower = 4 / 2;
   self.lastyspeed = 0;
 
   /**
