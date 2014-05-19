@@ -449,6 +449,7 @@ function main(canv) {
   c.Ticker.addEventListener('tick', tick);
   //c.Ticker.timingMode = c.Ticker.RAF;
   c.Ticker.setFPS(fps);
+  c.Ticker.timingMode = c.Ticker.RAF_SYNCHED;
 }
 
 /**
@@ -500,6 +501,12 @@ var newEntity = function(x, y, color) {
   self.jumpPower = 4 / 2;
   self.lastyspeed = 0;
 
+  self.jumpDelay = globalTicks + Math.floor(Math.random() * 100);
+
+  // horizontal movement variables
+  self.direction = Math.random() < .5 ? -1 : 1; // -1 left, 1 right
+  self.moveDelay = globalTicks + Math.floor(Math.random() * 100);
+
   /**
     * Entity tick
     */
@@ -519,18 +526,20 @@ var newEntity = function(x, y, color) {
 
     // make the sprite flip from left to right at the inflection point
     if (this.lastyspeed < 0 && this.yspeed >= 0 && !this.onFloor) {
+      /*
       this.scaleX *= -1;
       if (this.scaleX < 0)
         this.regX = 9;
       else
         this.regX = 0;
+      */
     }
     this.lastyspeed = this.yspeed;
 
+    var i = Math.floor( (this.x + 4) / tileSize );
+    var j = Math.floor( (this.y + this.h + this.yspeed)  / tileSize );
     // apply gravity and collision detection if not on floor
     if (!this.onFloor) {
-      var i = Math.floor( (this.x + 4) / tileSize );
-      var j = Math.floor( (this.y + this.h + this.yspeed)  / tileSize );
       var t = map[i][j] || map[i][j+1];
       //if (!t) return;
       if (!t || this.yspeed < 0) {
@@ -561,22 +570,38 @@ var newEntity = function(x, y, color) {
             this.y = t.y - this.h;
             this.gotoAndStop("stand");
 
-            var that = this;
-            var j = function() {
-              that.jump(Math.random() * that.jumpPower);
-            };
-
-            // TODO
-            setTimeout(function() {
-              j();
-            }, Math.random() * 5 * 250);
-
+            this.jumpDelay = globalTicks + Math.random() * 150;
             break;
         }
       }
 
       this.y += this.yspeed;
-      this.x += this.xspeed;    
+      this.x += this.xspeed;
+    } // !onFloor
+
+    // horizontal movement
+    if (!this.onFloor && this.x > 0 && this.x + 10 < width) {
+      var t = map[i + this.direction][j];
+
+      if (!t || t.type === 'water')
+        this.x += this.direction;
+
+      if (this.onFloor && globalTicks > this.moveDelay) {
+        this.moveDelay = globalTicks + Math.floor(Math.random() * 100);
+        this.direction = Math.random() < .5 ? -1 : 1; // -1 left, 1 right
+
+        this.scaleX *= this.direction;
+        if (this.scaleX < 0)
+          this.regX = 9;
+        else
+          this.regX = 0;
+      }
+
+    }
+
+    // jumpdelay
+    if (this.onFloor && globalTicks > this.jumpDelay) {
+      this.jump(Math.random() * this.jumpPower);
     }
 
     self.jump = function(amount) {
@@ -584,8 +609,8 @@ var newEntity = function(x, y, color) {
         this.onFloor = false;
         this.yspeed = -amount;
       }
-    }
-  }
+    } // jump
+  } // tick
 
   return self;
 }
