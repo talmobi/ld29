@@ -25,7 +25,6 @@ var buffer = [];
 
 var updateMode = 1;
 
-var stage;
 var fps = 30;
 
 var once = false;
@@ -46,7 +45,7 @@ function array2D(w,h) {
 
 var map = (array2D)();
 var buffertiles = [];
-var mapContainer;
+var tileBatch;
 
 // make a sliced map container
 // slice it into 4 by 4
@@ -112,7 +111,8 @@ function create() {
   var imgData = ctx.getImageData(0, 0, imgCanvas.width, imgCanvas.height);
   var pixels = imgData.data;
 
-  mapContainer = new Phaser.Group(game, null, 'tiles');
+  //mapContainer = new Phaser.Group(game, null, 'tiles');
+  tileBatch = new Phaser.SpriteBatch(game, null, 'tiles');
 
   // loop through the pixels 4BYTE_RGBA
   var count = 0;
@@ -131,13 +131,14 @@ function create() {
         else
         tile = newTile(x * tileSize, y * tileSize);
       map[x][y] = tile;
-      //mapContainer.add(tile);
+      tileBatch.add(tile);
     }
 
     count++;
   }
 
-  console.log(mapContainer);
+  // add the tilecontainer
+  game.world.add(tileBatch);
 
   console.log("count: " + count);
 
@@ -330,7 +331,7 @@ var newTile = function(x, y, type) {
   if (type === 'water') {
     n = 4;
   }
-  var spr = game.add.sprite(x | 0, y | 0, 'tiles', n);
+  var spr = new Phaser.Sprite(game, x | 0, y | 0, 'tiles', n);
   spr.anchor.set(0,0);
   spr.smoothed = false;
   spr.type = type || 'ground';
