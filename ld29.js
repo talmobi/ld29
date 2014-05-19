@@ -145,6 +145,40 @@ function create() {
   game.scale.setShowAll();
   game.scale.refresh();
 
+  /**
+    * Add input events
+    */
+  // add tiles when mouse is pressed
+  game.input.onDown.add(function() {
+    mousePressed = true;
+    console.log("pressed");
+  });
+
+  game.input.onUp.add(function() {
+    mousePressed = false;
+    console.log("released");
+  });
+
+  game.input.onHold.add(function() {
+    var x = Math.floor(game.input.activePointer.clientX / scale);
+    var y = Math.floor(game.input.activePointer.clientY / scale);
+    if (x < 0 || x >= width || y < 0 || y >= height)
+      return;
+    var i = Math.floor(x / tileSize);
+    var j = Math.floor(y / tileSize);
+    //alert("x: " + x + ", y: " + y);
+    if (!map[i][j]) {
+      var t = newTile(x,y);
+      map[i][j] = t;
+      //buffertiles.push(t);
+      tileBatch.add(t);
+
+      console.log(t);
+    }
+  });
+
+  
+
 } // create
 
 function init(_divid, _scale, _nn) {
@@ -487,6 +521,26 @@ var newBox = function(x,y,w,h,color) {
 function update() {
   globalTicks++;
   stats.begin();
+
+
+  if (mousePressed) {
+    //var x = Math.floor(game.input.activePointer.clientX / scale);
+    //var y = Math.floor(game.input.activePointer.clientY / scale);
+    var x = Math.floor(game.input.worldX);
+    var y = Math.floor(game.input.worldY);
+    if (x < 0 || x >= width || y < 0 || y >= height)
+      return;
+    var i = Math.floor(x / tileSize);
+    var j = Math.floor(y / tileSize);
+    //alert("x: " + x + ", y: " + y);
+    if (!map[i][j]) {
+      var t = newTile(x,y);
+      map[i][j] = t;
+      //buffertiles.push(t);
+      tileBatch.add(t);
+    }
+  }
+
 
   switch (updateMode) {
     case 0:
