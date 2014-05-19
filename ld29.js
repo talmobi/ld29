@@ -16,7 +16,7 @@ var width = 384;
 var height = width * 9 / 16;
 var scale = 1;
 var tileSize = 2; // in pixels
-var gravity = .1;
+var gravity = .1 / 2;
 
 var globalTicks = 0;
 
@@ -85,12 +85,14 @@ var nn = true; // nearest neighbor scaling
   */
 function preload() {
   game.load.image('level', 'assets/level.png');
-  game.load.image('sheet', 'assets/sheet.png');
+  game.load.spritesheet('sheet', 'assets/sheet.png', 9, 9);
   game.load.spritesheet('tiles', 'assets/tiles.png', 2, 2);
 } // preload
 
 // Initialize assets
 function create() {
+  game.input.maxPointers = 1;
+
   /**
     * load level data
     * To get the pixel data we need to first
@@ -142,6 +144,14 @@ function create() {
 
   console.log("count: " + count);
 
+
+  /**
+    * Scaling
+    */
+  if (this.game.device.desktop) {
+    game.scale.pageAlignHorizontally = true;
+    game.scale.refresh();
+  }
   game.scale.setShowAll();
   game.scale.refresh();
 
@@ -172,14 +182,29 @@ function create() {
       map[i][j] = t;
       //buffertiles.push(t);
       tileBatch.add(t);
-
-      console.log(t);
     }
   });
 
-  
+
+
+  /**
+    * Add some entities
+    */
+  for (var i = 0; i < 180; i++) {
+    var entity = newEntity(20 + 2 * i, 100);
+    buffer.push(entity);
+    game.world.add(entity);
+  }
+  for (var i = 0; i < 180; i++) {
+    var entity = newEntity(19 + 2 * i, 120);
+    buffer.push(entity);
+    game.world.add(entity);
+  }
+
+  game.antialias = false;
 
 } // create
+
 
 function init(_divid, _scale, _nn) {
   game = new Phaser.Game(width,height,Phaser.AUTO, _divid || 'container', {
@@ -192,169 +217,6 @@ function init(_divid, _scale, _nn) {
   scale = (_scale || scale) | 0;
   divid = _divid;
 }
-
-
-/**
-  * main
-  */
-function main(canv) {
-  var canvas = document.getElementById(canv || 'myCanvas');
-
-  canvas.width = width * scale;
-  canvas.height = height * scale;
-
-  /*
-  var ctx = canvas.getContext('2d');
-  ctx.scale(4,4);
-  */
-
-  stage = new c.Stage(canvas);
-  //canvas.getContext('2d').imageSmoothingEnabled = false;
-
-  // between pixel fix
-  stage.regX = .5;
-  stage.regY = .5;
-
-  // scale the stage
-  stage.scaleX = scale;
-  stage.scaleY = scale;
-
-  stage.update();
-
-  /**
-    * Initialize Map
-    */
-  console.log("w: " + map.length + ", h: " + map[0].length);
-
-  // clear containers from existing tiles
-  for (var i = 0; i < 4; i++) {
-    for (var j = 0; j < 4; j++) {
-      mapContainers[i][j].removeAllChildren();
-    }
-  }
-
-  // populate the mapContainers with tiles from the map
-  for (var i = 0; i < map.length; i++) {
-    for (var j = 0; j < map[0].length; j++) {
-      var t = map[i][j];
-      if (!t)
-        continue; // skip empty tiles
-      
-      // find the correct container
-      var x = Math.floor(i / (contWidth / tileSize) );
-      var y = Math.floor(j / (contHeight / tileSize) );
-      mapContainers[x][y].addChild(t);
-    }
-  }
-
-  // cache the containers
-  for (var i = 0; i < contSize; i++) {
-    for (var j = 0; j < contSize; j++) {
-      var cw = contWidth;
-      var ch = contHeight;
-
-      if (blurryScaling) // blurry scaling
-        mapContainers[i][j].cache(i * cw, j * ch, cw, ch);
-        else // pixelated scaling
-        mapContainers[i][j].cache(i * cw, j * ch, cw, ch, scale);
-
-      stage.addChild(mapContainers[i][j]);
-    }
-  }
-
-  /* OLD single container cache ( slow re-caching )
-  cache the map (draw time reduced dramatically)
-  mapContainer.cache(0, 0, width, height);
-  mapContainer.snapToPixel = true;
-
-  stage.addChild(mapContainer);*/
-
-  /**
-    * add some entities
-    */
-  stage.clear();
-  entities.length = 0;
-  buffertiles.length = 0;
-  for (var i = 0; i < 180; i++) {
-    var entity = newEntity(20 + 2 * i, 100);
-    buffer.push(entity);
-    stage.addChild(entity);
-  }
-  for (var i = 0; i < 180; i++) {
-    var entity = newEntity(19 + 2 * i, 120);
-    buffer.push(entity);
-    stage.addChild(entity);
-  }
-
-
-  // add tiles when mouse is pressed
-  stage.addEventListener('stagemousemove', function(evt) {
-    if (mousePressed) {
-      var x = Math.floor(evt.stageX / scale);
-      var y = Math.floor(evt.stageY / scale);
-      if (x < 0 || x >= width || y < 0 || y >= height)
-        return;
-      var i = Math.floor(x / tileSize);
-      var j = Math.floor(y / tileSize);
-      //alert("x: " + x + ", y: " + y);
-      if (!map[i][j]) {
-        var t = newTile(x,y);
-        map[i][j] = t;
-        stage.addChild(t);
-        buffertiles.push(t);
-        mapContainers[Math.floor(x / contWidth)][Math.floor(y / contHeight)].addChild(t.clone());
-      }
-    }
-  });
-
-  stage.addEventListener('stagemousedown', function(evt) {
-    mousePressed = true;
-  });
-
-  stage.addEventListener('stagemouseup', function(evt) {
-    mousePressed = false;
-
-    // find the affected parts of the map that needs an update
-    for (var i = 0; i < 4; i++) {
-      for (var j = 0; j < 4; j++) {
-        mapContainers[i][j].shouldUpdate = false;
-      }
-    }
-
-    // remove the tiles from the root stage
-    while (buffertiles.length > 0) {
-      var t = buffertiles.pop();
-      var x = Math.floor(t.x / (contWidth) );
-      var y = Math.floor(t.y / (contHeight) );
-      //console.log("x: " + x + ", y: " + y);
-      mapContainers[x][y].shouldUpdate = true;
-    }
-    //mapContainers.updateCache();
-
-    // update the affected parts of the map
-    for (var i = 0; i < 4; i++) {
-      for (var j = 0; j < 4; j++) {
-        if (mapContainers[i][j].shouldUpdate) {
-          mapContainers[i][j].updateCache();
-          mapContainers[i][j].shouldUpdate = false;
-
-          // add a tempory visual queue on the updated part
-          var box = newBox(i * 96 + 1, j * 54 + 1, 96 - 1, 54 - 1, "red");
-
-          var removeBox = function(b) {
-            return function() {
-              stage.removeChild(b);
-            }
-          }
-
-          setTimeout(removeBox(box), 1000);
-        }
-      }
-    }
-
-  });
-
-} // main
 
 
 /**
@@ -387,14 +249,16 @@ var newTile = function(x, y, type) {
   */
 var newEntity = function(x, y, color) {
   //var self = sprSheet.greenguy.clone();
-  var self = {};
+  var self = new Phaser.Sprite(game, x | 0, y | 0, 'sheet', 0);
 
   self.snapToPixel = true;
+  self.smoothed = false;
   self.removed = false;
   self.x = x;
   self.y = y;
   self.w = 9;
   self.h = 9;
+  self.anchor.setTo(0.5, 0);
 
   //self.filters = [new createjs.ColorFilter(1,0,0,1)];
 
@@ -407,7 +271,7 @@ var newEntity = function(x, y, color) {
 
   self.onFloor = false;
 
-  self.jumpPower = 4;
+  self.jumpPower = 4 / 2;
   self.lastyspeed = 0;
 
   /**
@@ -427,24 +291,20 @@ var newEntity = function(x, y, color) {
 
     // make the sprite flip from left to right at the inflection point
     if (this.lastyspeed < 0 && this.yspeed >= 0 && !this.onFloor) {
-      this.scaleX *= -1;
-      if (this.scaleX < 0)
-        this.regX = 9;
-      else
-        this.regX = 0;
+      this.scale.x *= -1;
     }
     this.lastyspeed = this.yspeed;
 
     // apply gravity and collision detection if not on floor
     if (!this.onFloor) {
-      var i = Math.floor( (this.x + 4) / tileSize );
+      var i = Math.floor( (this.x) / tileSize );
       var j = Math.floor( (this.y + this.h + this.yspeed)  / tileSize );
       var t = map[i][j] || map[i][j+1];
       //if (!t) return;
       if (!t || this.yspeed < 0) {
         this.yspeed += gravity;
-        if (this.currentAnimation !== 'walk')
-          this.gotoAndPlay("walk");
+        //if (this.currentAnimation !== 'walk')
+          //this.gotoAndPlay("walk");
       } else {
 
         switch (t.type) {
@@ -467,7 +327,7 @@ var newEntity = function(x, y, color) {
             this.onFloor = true;
             this.yspeed = 0;
             this.y = t.y - this.h;
-            this.gotoAndStop("stand");
+            //this.gotoAndStop("stand");
 
             var that = this;
             var j = function() {
@@ -611,7 +471,7 @@ function inplace() {
         entities[i - removed] = e;
       }
     } else {
-      stage.removeChild(e);
+      e.destroy();
       removed++;
     }
   }
@@ -625,6 +485,7 @@ function inplace() {
   while (buffer.length > 0) {
     var e = buffer.pop();
     entities.push( e );
+    game.world.add(e);
     //stage.addChild(e);
   }
   // src: http://stackoverflow.com/questions/1232040/how-to-empty-an-array-in-javascript
