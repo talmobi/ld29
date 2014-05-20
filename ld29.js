@@ -207,7 +207,7 @@ function create() {
 
 
 function init(_divid, _scale, _nn) {
-  game = new Phaser.Game(width,height,Phaser.AUTO, _divid || 'container', {
+  game = new Phaser.Game(width,height,Phaser.CANVAS, _divid || 'container', {
     preload: preload,
     create: create,
     update: update,
