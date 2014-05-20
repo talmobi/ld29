@@ -34,17 +34,17 @@ var mousePressed = false;
 // init an empty map array
 function array2D(w,h) {
   
-    var arr = new Array(w);
+  var arr = new Array(w);
   for (var i = 0; i < w; i++) {
     arr[i] = new Array(h);
   }
   //console.log(arr);
   return arr;
-}
+};
 
 var w = Math.floor(width / tileSize);
 var h = Math.floor(height / tileSize);
-var map = (array2D(w,h))();
+var map = array2D(w,h);
 var buffertiles = [];
 var tileBatch;
 
