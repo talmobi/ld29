@@ -97,9 +97,9 @@ function init(_canvas, _scale, _tileScaleMethod, _bs) {
   tileMethod = Math.floor(tileMethod);
 
   var manifest = [
-    {src:"assets/level.png", id:"level"},
-    {src:"assets/sheet.png", id:"sheet"},
-    {src:"assets/tiles.png", id:"tiles"}
+    {src:"../assets/level.png", id:"level"},
+    {src:"../assets/sheet.png", id:"sheet"},
+    {src:"../assets/tiles.png", id:"tiles"}
   ];
 
   var loader = new c.LoadQueue(false);
