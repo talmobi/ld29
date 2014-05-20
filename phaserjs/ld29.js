@@ -84,9 +84,9 @@ var nn = true; // nearest neighbor scaling
   * Preload assets
   */
 function preload() {
-  game.load.image('level', 'assets/level.png');
-  game.load.spritesheet('sheet', 'assets/sheet.png', 9, 9);
-  game.load.spritesheet('tiles', 'assets/tiles.png', 2, 2);
+  game.load.image('level', '../assets/level.png');
+  game.load.spritesheet('sheet', '../assets/sheet.png', 9, 9);
+  game.load.spritesheet('tiles', '../assets/tiles.png', 2, 2);
 } // preload
 
 // Initialize assets
