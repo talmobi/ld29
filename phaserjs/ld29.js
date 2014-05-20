@@ -33,8 +33,7 @@ var mousePressed = false;
 
 // init an empty map array
 function array2D(w,h) {
-  var w = Math.floor(width / tileSize);
-  var h = Math.floor(height / tileSize);
+  
     var arr = new Array(w);
   for (var i = 0; i < w; i++) {
     arr[i] = new Array(h);
@@ -43,7 +42,9 @@ function array2D(w,h) {
   return arr;
 }
 
-var map = (array2D)();
+var w = Math.floor(width / tileSize);
+var h = Math.floor(height / tileSize);
+var map = (array2D(w,h))();
 var buffertiles = [];
 var tileBatch;
 
@@ -207,7 +208,7 @@ function create() {
 
 
 function init(_divid, _scale, _nn) {
-  game = new Phaser.Game(width,height,Phaser.CANVAS, _divid || 'container', {
+  game = new Phaser.Game(width,height,Phaser.AUTO, _divid || 'container', {
     preload: preload,
     create: create,
     update: update,
